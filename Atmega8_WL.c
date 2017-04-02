@@ -227,6 +227,9 @@ volatile uint16_t	pwmpulscounter=0;
 volatile uint8_t pwmstatus=0;
 
 
+volatile uint32_t	loadcounter=0; // schaltet load fuer PowerBanl-Reset ein
+
+
 
 volatile uint8_t spi_status=0;
 
@@ -504,6 +507,10 @@ void deviceinit(void)
    PWM_DETECT_DDR &= ~(1<<PWM_DETECT);
    PWM_DETECT_PORT |= (1<<PWM_DETECT);
    
+   LOADDDR |= (1<<LOADPIN); // reset fuer PowerBank
+   LOADPORT |= (1<<LOADPIN);
+
+   
    LOOPLED_DDR |= (1<<LOOPLED_PIN);
 	//PORTD &= ~(1<<CONTROL_B);
 	//PORTD &= ~(1<<CONTROL_A);
@@ -524,8 +531,8 @@ void deviceinit(void)
    PTDDR |= (1<<PT_LOAD_PIN); // Pin fuer Impuls-load von pT1000
    PTPORT |= (1<<PT_LOAD_PIN);// hi
 	
-   DDRB |= (1<<PORTB0);	//OC1A: Bit 1 von PORT B als Ausgang fuer PWM
-   PORTB |= (1<<PORTB0);	//LO
+//   DDRB |= (1<<PORTB0);	//OC1A: Bit 1 von PORT B als Ausgang fuer PWM
+//   PORTB |= (1<<PORTB0);	//LO
 
 
 	DDRB |= (1<<PORTB1);	//OC1A: Bit 1 von PORT B als Ausgang fuer PWM
@@ -742,6 +749,27 @@ ISR(TIMER2_OVF_vect)
 ISR(TIMER2_COMP_vect) // ca 4 us
 {
    //OSZIA_LO;
+   // reset fuer PowerBank
+   loadcounter++;
+   if (loadcounter == 1)
+   {
+      LOADPORT |= (1<<LOADPIN); // Impuls start
+   }
+   
+   if (loadcounter == 0xF00)
+   {
+      LOADPORT &= ~(1<<LOADPIN); // Impuls end
+   }
+   
+   if (loadcounter == 0xFFFF) // Abstand
+   {
+      loadcounter=0;
+   }
+
+   
+   
+   
+   // PWM bestimmen
    pwmpulscounter++;
    
    if (PWM_DETECT_PIN & (1<<PWM_DETECT)) // Pin ist Hi
