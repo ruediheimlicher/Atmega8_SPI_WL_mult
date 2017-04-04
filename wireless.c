@@ -17,7 +17,6 @@
 #define WL_PIPE   2
 
 void wl_spi_init()
-
 // Initialize pins for spi communication
 {
    
@@ -27,6 +26,7 @@ void wl_spi_init()
    SPCR = ((1<<SPE)|
            (0<<SPIE)|
            (0<<DORD)|
+           
            // 1:LSB first)
            (1<<MSTR)|
            (0<<SPR1)|(1<<SPR0)|
@@ -41,11 +41,9 @@ void wl_spi_init()
    // Clock Polarity (0:SCK l
    // Clock Phase (0:leading
    
-//   SPSR = (1<<SPI2X);// Double Clock Rate
+   // SPSR = (1<<SPI2X); // Double Clock Rate
    
-   
-   
-   //Stromlaufplan für den Anschluß an einen ATmega8
+//Stromlaufplan für den Anschluß an einen ATmega8
 }
 
 void spi_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
@@ -57,6 +55,7 @@ void spi_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
       SPDR = dataout[i]; while((SPSR & (1<<SPIF))==0); datain[i] = SPDR;
    }
 }
+
 void spi_transmit_sync (uint8_t * dataout, uint8_t len)
 // Shift full array to target device without receiving any byt e
 {
@@ -66,6 +65,7 @@ void spi_transmit_sync (uint8_t * dataout, uint8_t len)
       SPDR = dataout[i]; while((SPSR & (1<<SPIF))==0);
    }
 }
+
 uint8_t spi_fast_shift (uint8_t data)
 // Clocks only one byte to target device and returns the recei ved one
 {
