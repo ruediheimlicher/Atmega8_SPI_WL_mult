@@ -912,7 +912,7 @@ int main (void)
          
          wl_spi_status &= ~(1<<WL_ISR_RECV);
          
-         lcd_gotoxy(6,0);
+         lcd_gotoxy(4,0);
          lcd_putc('i');
          lcd_puthex(int0counter);
          
@@ -937,14 +937,14 @@ int main (void)
          pipenummer = wl_module_get_rx_pipe();
          
          delay_ms(3);
-         lcd_gotoxy(10,0);
+         lcd_gotoxy(8,0);
          lcd_putc('p');
          lcd_puthex(pipenummer);
                   
          
          if (pipenummer == WL_PIPE) // Request ist fuer uns, Data schicken
          {
-            lcd_gotoxy(10,0);
+            lcd_gotoxy(12,0);
             lcd_puts("p ok");
             //lcd_gotoxy(0,0);
             delay_ms(2);
@@ -952,8 +952,8 @@ int main (void)
             if (wl_status & (1<<RX_DR)) // IRQ: Package has been received
             {
                //OSZIA_LO;
-               //lcd_gotoxy(16,2);
-               //lcd_puts("RX+");
+               lcd_gotoxy(0,1);
+               lcd_puts("RX");
                //OSZIA_HI;
                
                uint8_t rec = wl_module_get_rx_pw(WL_PIPE);        //gets the RX payload width on the pipe
@@ -967,6 +967,11 @@ int main (void)
                wl_module_config_register(STATUS, (1<<RX_DR)); //Clear Interrupt Bit
                delay_ms(3);
                uint8_t i;
+               
+               
+               lcd_gotoxy(6,1);
+               lcd_putc('c');
+               lcd_puthex(wl_data[9]); // counter von master
                
                //lcd_gotoxy(0,0);
                //lcd_puts("rs:");
@@ -993,9 +998,6 @@ int main (void)
                //   lcd_putint1(temperatur%10);
                
                //lcd_put_tempbis99(temperatur);
-               
-               //            lcd_gotoxy(18,3);
-               //            lcd_puthex(wl_data[9]);
                
                pwmpos = temperatur;
                OCR1A = temperatur;
@@ -1045,7 +1047,8 @@ int main (void)
          }
          else
          {
-            // lcd_puts("--");
+            lcd_gotoxy(12,0);
+            lcd_puts("p --");
             
          }
          
@@ -1300,7 +1303,7 @@ int main (void)
             //lcd_putint12((ptwert/PT_ADC_FAKTOR));
             ptwert /= PT_ADC_FAKTOR;
             ptwert -= PT_OFFSET;
-            lcd_gotoxy(12,1);
+            lcd_gotoxy(10,1);
             //lcd_putc(' ');
             lcd_putc('t');
             //lcd_putc(' ');
