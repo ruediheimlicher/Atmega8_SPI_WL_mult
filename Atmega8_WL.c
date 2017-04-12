@@ -885,7 +885,6 @@ int main (void)
    uint8_t readstatus = wl_module_get_data((void*)&wl_data);
    //lcd_puts(" los");
    
-   
    uint8_t eevar=13;
    
    timer2();
@@ -911,11 +910,11 @@ int main (void)
          }
          
          wl_spi_status &= ~(1<<WL_ISR_RECV);
-         
+         /*
          lcd_gotoxy(4,0);
          lcd_putc('i');
          lcd_puthex(int0counter);
-         
+         */
          
          // MARK: WL Loop
          /*
@@ -926,30 +925,33 @@ int main (void)
           lcd_puthex(wl_status & (1<<TX_FULL));
           */
          wl_status = wl_module_get_status();
-         delay_ms(3);
+         delay_ms(20);
          
          //lcd_gotoxy(18,0);
-         
-
          //lcd_puthex(wl_status);
-         
          
          pipenummer = wl_module_get_rx_pipe();
          
-         delay_ms(3);
+         delay_ms(20);
          lcd_gotoxy(8,0);
          lcd_putc('p');
          lcd_puthex(pipenummer);
-                  
+         //lcd_gotoxy(12,0);
+         //lcd_puts("    ");
+
          
          if (pipenummer == WL_PIPE) // Request ist fuer uns, Data schicken
          {
             lcd_gotoxy(12,0);
-            lcd_puts("p ok");
+            lcd_puts("p ");
+
+            lcd_gotoxy(11,0);
+            //lcd_puts("p ok");
+            lcd_putc('+');
             //lcd_gotoxy(0,0);
-            delay_ms(2);
+            //delay_ms(2);
             //lcd_puts("          ");
-            if (wl_status & (1<<RX_DR)) // IRQ: Package has been received
+            if (wl_status & (1<<RX_DR)) // IRQ: Package has been received, neue Data angekommen
             {
                //OSZIA_LO;
                lcd_gotoxy(0,1);
@@ -963,13 +965,13 @@ int main (void)
                //lcd_putc(' ');
                delay_ms(3);
                uint8_t readstatus = wl_module_get_data((void*)&wl_data); // Reads wl_module_PAYLOAD bytes into data array
-               delay_ms(3);
+               delay_ms(10);
                wl_module_config_register(STATUS, (1<<RX_DR)); //Clear Interrupt Bit
-               delay_ms(3);
+               delay_ms(10);
                uint8_t i;
                
                
-               lcd_gotoxy(6,1);
+               lcd_gotoxy(4,0);
                lcd_putc('c');
                lcd_puthex(wl_data[9]); // counter von master
                
@@ -1005,13 +1007,14 @@ int main (void)
                
                wl_spi_status |= (1<<WL_SEND_REQUEST);
                
+               
                if (wl_spi_status & (1<<WL_SEND_REQUEST)) // senden starten
                {
                   wl_spi_status &= ~(1<<WL_SEND_REQUEST);
                   
                   // MARK: WL send
                   wl_module_tx_config(WL_PIPE); // neue Daten senden an Master auf pipe WL_PIPE
-                  delay_ms(1);
+                  delay_ms(10);
 
                   //lcd_putc('b');
                   
@@ -1048,12 +1051,9 @@ int main (void)
          else
          {
             lcd_gotoxy(12,0);
-            lcd_puts("p --");
+            lcd_puts("p-");
             
          }
-         
-         
-         
          if (wl_status & (1<<TX_DS)) // IRQ: Package has been sent
          {
             //OSZIA_LO; // 50 ms mit Anzeige, 140us ohne Anzeige
@@ -1085,6 +1085,9 @@ int main (void)
          
          
       } // end ISR abarbeiten
+      
+      
+      
       
       /*
        if (wl_spi_status & (1<<WL_SEND_REQUEST)) // senden starten
