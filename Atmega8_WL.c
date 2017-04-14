@@ -930,7 +930,7 @@ int main (void)
          //lcd_gotoxy(18,0);
          //lcd_puthex(wl_status);
          
-         pipenummer = wl_module_get_rx_pipe();
+         pipenummer = wl_module_get_rx_pipe_from_status(wl_status);
          
          delay_ms(20);
          lcd_gotoxy(8,0);
@@ -938,6 +938,11 @@ int main (void)
          lcd_puthex(pipenummer);
          //lcd_gotoxy(12,0);
          //lcd_puts("    ");
+
+         lcd_gotoxy(16,1);
+         lcd_puts("  ");
+         lcd_gotoxy(0,1);
+         lcd_puts("  ");
 
          
          if (pipenummer == WL_PIPE) // Request ist fuer uns, Data schicken
@@ -963,11 +968,12 @@ int main (void)
                //lcd_gotoxy(0,3);
                //lcd_puthex(rec);
                //lcd_putc(' ');
-               delay_ms(3);
+               delay_ms(20);
                uint8_t readstatus = wl_module_get_data((void*)&wl_data); // Reads wl_module_PAYLOAD bytes into data array
-               delay_ms(10);
+               delay_ms(20);
                wl_module_config_register(STATUS, (1<<RX_DR)); //Clear Interrupt Bit
-               delay_ms(10);
+               //wl_module_config_register(STATUS, 0xFF);
+               delay_ms(20);
                uint8_t i;
                
                
@@ -1014,26 +1020,31 @@ int main (void)
                   
                   // MARK: WL send
                   wl_module_tx_config(WL_PIPE); // neue Daten senden an Master auf pipe WL_PIPE
-                  delay_ms(10);
+                  delay_ms(20);
 
                   //lcd_putc('b');
                   
                   
                   wl_module_send(payload,wl_module_PAYLOAD);
                   //lcd_putc('c');
+                  delay_ms(10);
                   
-                  uint8_t tx_status = wl_module_get_status();
+                  wl_module_rx_config(); // empfangen wieder einstellen
+                  //uint8_t tx_status = wl_module_get_status();
                   //delay_ms(3);
                   lcd_gotoxy(0,0);
-                  lcd_putc('s');
+                  lcd_puthex(sendcounter);
+                  //lcd_putc('s');
+                  //lcd_gotoxy(0,1);
+
                   //lcd_puthex(tx_status);
                   //lcd_putc(' ');
-                  lcd_puthex(sendcounter);
+                  
                   
                   maincounter++;
                   PTX=0;
                   
-                  wl_module_rx_config(); // empfangen wieder einstellen
+                  
                   //delay_ms(3);
                } // if
                
@@ -1054,12 +1065,13 @@ int main (void)
             lcd_puts("p-");
             
          }
+         
          if (wl_status & (1<<TX_DS)) // IRQ: Package has been sent
          {
             //OSZIA_LO; // 50 ms mit Anzeige, 140us ohne Anzeige
             sendcounter++;
             lcd_gotoxy(16,1);
-            lcd_puts("TX+");
+            lcd_puts("TX");
             wl_module_config_register(STATUS, (1<<TX_DS)); //Clear Interrupt Bit
             PTX=0;
             //OSZIA_HI;
@@ -1073,49 +1085,20 @@ int main (void)
          
          if (wl_status & (1<<MAX_RT)) // IRQ: Package has not been sent, send again
          {
-            lcd_gotoxy(16,1);
+            lcd_gotoxy(16,2);
             lcd_puts("RT");
             
             wl_module_config_register(STATUS, (1<<MAX_RT)); // Clear Interrupt Bit
-            wl_module_CE_hi;
-            _delay_us(10);
-            wl_module_CE_lo;
+//            wl_module_CE_hi;
+//            _delay_us(10);
+//            wl_module_CE_lo;
          }
          
-         
+         //wl_module_config_register(STATUS, 0xFF);
          
       } // end ISR abarbeiten
       
       
-      
-      
-      /*
-       if (wl_spi_status & (1<<WL_SEND_REQUEST)) // senden starten
-       {
-       wl_spi_status &= ~(1<<WL_SEND_REQUEST);
-       
-       wl_module_tx_config(0); // neue Daten senden an device 0 (Master)
-       
-       //lcd_putc('b');
-       
-       wl_module_send(payload,wl_module_PAYLOAD);
-       //lcd_putc('c');
-       
-       uint8_t tx_status = wl_module_get_status();
-       
-       lcd_gotoxy(0,1);
-       //lcd_putc(' ');
-       lcd_puthex(tx_status);
-       lcd_putc(' ');
-       lcd_puthex(sendcounter);
-       
-       maincounter++;
-       PTX=0;
-       
-       wl_module_rx_config(); // empfangen wieder einstellen
-       
-       } // if
-       */
       
       
       
