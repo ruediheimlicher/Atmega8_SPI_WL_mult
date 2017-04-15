@@ -20,7 +20,7 @@ void wl_spi_init()
 // Initialize pins for spi communication
 {
    
-   SPI_PORT &= ~((1<<SPI_MOSI)|(1<<SPI_MISO)|(1<<SPI_SS)|(1<<SPI_CLK));
+   SPI_PORT &= ~((1<<SPI_MOSI)|(1<<SPI_MISO)|(1<<SPI_CLK));
    // Define the following pins as output
    SPI_DDR |= ((1<<SPI_MOSI)|(1<<SPI_SS)|(1<<SPI_CLK));
    SPCR = ((1<<SPE)|
@@ -44,6 +44,21 @@ void wl_spi_init()
    // SPSR = (1<<SPI2X); // Double Clock Rate
    
 //Stromlaufplan für den Anschluß an einen ATmega8
+}
+
+void wl_re_init()
+{
+   SPI_PORT &= ~((1<<SPI_MOSI)|(1<<SPI_MISO)|(1<<SPI_CLK));
+   //SPCR=0;
+   SPCR = ((1<<SPE)|
+           (0<<SPIE)|
+           (0<<DORD)|
+           
+           // 1:LSB first)
+           (1<<MSTR)|
+           (0<<SPR1)|(1<<SPR0)|
+           (0<<CPOL)|(0<<CPHA));// 1:SCK hi when idle, 0: SCK lo when idle
+
 }
 
 void spi_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)

@@ -14,6 +14,8 @@
 #include <avr/interrupt.h>
 
 extern void wl_spi_init(void);
+extern void wl_re_init();
+
 extern void spi_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len);
 extern void spi_transmit_sync (uint8_t * dataout, uint8_t len) ;
 extern uint8_t spi_fast_shift (uint8_t data);

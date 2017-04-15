@@ -513,8 +513,8 @@ void deviceinit(void)
    PWM_DETECT_DDR &= ~(1<<PWM_DETECT);
    PWM_DETECT_PORT |= (1<<PWM_DETECT);
    
-   LOADDDR |= (1<<LOADPIN); // reset fuer PowerBank
-   LOADPORT |= (1<<LOADPIN);
+   PB_LOAD_DDR |= (1<<PB_LOAD_PIN); // reset fuer PowerBank
+   PB_LOAD_PORT |= (1<<PB_LOAD_PIN);
 
    
    LOOPLED_DDR |= (1<<LOOPLED_PIN);
@@ -534,8 +534,8 @@ void deviceinit(void)
 
 
    
-   PTDDR |= (1<<PT_LOAD_PIN); // Pin fuer Impuls-load von pT1000
-   PTPORT |= (1<<PT_LOAD_PIN);// hi
+   PT_DDR |= (1<<PT_LOAD_PIN); // Pin fuer Impuls-load von pT1000
+   PT_PORT |= (1<<PT_LOAD_PIN);// hi
 	
 //   DDRB |= (1<<PORTB0);	//OC1A: Bit 1 von PORT B als Ausgang fuer PWM
 //   PORTB |= (1<<PORTB0);	//LO
@@ -614,6 +614,7 @@ void SPI_Init(void)
    // Set MOSI and SCK output, all others input
    SPI_DDR &= ~(1<<SPI_MISO);
    SPI_DDR |= (1<<SPI_MOSI)|(1<<SPI_CLK)|(1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS);
    
    
    // Enable SPI, Master, set clock rate fck/16 
@@ -759,12 +760,12 @@ ISR(TIMER2_COMP_vect) // ca 4 us
    loadcounter++;
    if (loadcounter == 1)
    {
-      LOADPORT |= (1<<LOADPIN); // Impuls start
+      PB_LOAD_PORT |= (1<<PB_LOAD_PIN); // Impuls start
    }
    
    if (loadcounter == 0xF00)
    {
-      LOADPORT &= ~(1<<LOADPIN); // Impuls end
+      PB_LOAD_PORT &= ~(1<<PB_LOAD_PIN); // Impuls end
    }
    
    if (loadcounter == 0xFFFF) // Abstand
@@ -844,7 +845,10 @@ int main (void)
    deviceinit();
    
    SPI_Init();
+   
    SPI_Master_init();
+   
+   
    lcd_initialize(LCD_FUNCTION_8x2, LCD_CMD_ENTRY_INC, LCD_CMD_ON);
    lcd_puts("Guten Tag\0");
    delay_ms(1000);
@@ -1223,9 +1227,6 @@ int main (void)
             lcd_putint12(temperatur2/10);
             lcd_putc('.');
             lcd_putint1(temperatur2%10);
-            
-            
-            
             
             //lcd_gotoxy(0,1);
             //_delay_us(300);
