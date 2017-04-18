@@ -905,12 +905,11 @@ int main (void)
       loopCount0 ++;
       //_delay_ms(2);
       //LOOPLED_PORT ^= (1<<LOOPLED_PIN);
-      //incoming = SPDR;
-      
+      // MARK: WL Loop
       if (wl_spi_status & (1<<WL_ISR_RECV)) // in ISR gesetzt, etwas ist angekommen, Master fragt nach Daten
       {
-         OSZIA_LO;
-         
+         //OSZIA_LO;
+         lcd_clr_line(1);
          if (PIND & (1<<6))
          {
             WL_PIPE  = 2;
@@ -929,15 +928,16 @@ int main (void)
          {
             int0counter=0;
          }
-         
+         lcd_gotoxy(19,1);
+         lcd_putint1(WL_PIPE);
          wl_spi_status &= ~(1<<WL_ISR_RECV);
-         /*
-          lcd_gotoxy(4,0);
-          lcd_putc('i');
-          lcd_puthex(int0counter);
-          */
          
-         // MARK: WL Loop
+         lcd_gotoxy(0,0);
+         lcd_putc('i');
+         lcd_puthex(int0counter);
+         
+         
+         
          /*
           lcd_gotoxy(0,1);
           lcd_puthex(wl_status & (1<<RX_DR));
@@ -945,23 +945,25 @@ int main (void)
           lcd_puthex(wl_status & (1<<MAX_RT));
           lcd_puthex(wl_status & (1<<TX_FULL));
           */
+         lcd_gotoxy(0,1);
+         lcd_putc('a');
          wl_status = wl_module_get_status();
-         delay_ms(16);
+         delay_ms(20);
          
          //lcd_gotoxy(18,0);
          //lcd_puthex(wl_status);
-         
+         lcd_putc('b');
          pipenummer = wl_module_get_rx_pipe_from_status(wl_status);
          
-         delay_ms(3);
+         delay_ms(20);
          
+         
+         lcd_gotoxy(12,0);
+         lcd_putc('p');
+         lcd_puthex(pipenummer);
+         //lcd_gotoxy(12,0);
+         //lcd_puts("    ");
          /*
-          lcd_gotoxy(8,0);
-          lcd_putc('p');
-          lcd_puthex(pipenummer);
-          //lcd_gotoxy(12,0);
-          //lcd_puts("    ");
-          
           lcd_gotoxy(16,1);
           lcd_puts("  ");
           lcd_gotoxy(0,1);
@@ -970,8 +972,10 @@ int main (void)
          
          if (pipenummer == WL_PIPE) // Request ist fuer uns, Data schicken
          {
+            
             //           OSZIA_LO;
-            //            lcd_gotoxy(12,0);
+            lcd_gotoxy(12,1);
+            lcd_putc('c');
             //            lcd_puts("p ");
             
             //            lcd_gotoxy(11,0);
@@ -982,6 +986,8 @@ int main (void)
             //lcd_puts("          ");
             if (wl_status & (1<<RX_DR)) // IRQ: Package has been received, neue Data angekommen
             {
+               
+               lcd_putc('x');
                //OSZIA_LO;
                //               lcd_gotoxy(0,1);
                //               lcd_puts("RX");
@@ -1041,18 +1047,19 @@ int main (void)
                
                if (wl_spi_status & (1<<WL_SEND_REQUEST)) // senden starten
                {
+                  lcd_gotoxy(8,1);
                   wl_spi_status &= ~(1<<WL_SEND_REQUEST);
                   
                   // MARK: WL send
                   wl_module_tx_config(WL_PIPE); // neue Daten senden an Master auf pipe WL_PIPE
                   delay_ms(10);                 // kritiusch
                   
-                  //lcd_putc('b');
+                  lcd_putc('u');
                   
                   
                   wl_module_send(payload,wl_module_PAYLOAD);
-                  //lcd_putc('c');
-                  delay_ms(10); // kritisch
+                  lcd_putc('v');
+                  delay_ms(20); // kritisch
                   
                   wl_module_rx_config(); // empfangen wieder einstellen
                   //uint8_t tx_status = wl_module_get_status();
@@ -1081,8 +1088,8 @@ int main (void)
             } // if RX
             else
             {
-               //  lcd_gotoxy(16,2);
-               //  lcd_puts("***");
+               lcd_gotoxy(16,2);
+               lcd_puts("***");
                
             }
             //OSZIA_HI;
@@ -1091,18 +1098,21 @@ int main (void)
          else
          {
             wl_module_config_register(STATUS, (1<<RX_DR));
+            
             wl_module_get_one_byte(FLUSH_RX);
-            // lcd_gotoxy(12,0);
-            //lcd_puts("p-");
+            
+            lcd_gotoxy(12,1);
+            lcd_puts("p-");
             
          }
          
          if (wl_status & (1<<TX_DS)) // IRQ: Package has been sent
          {
+            
             //OSZIA_LO; // 50 ms mit Anzeige, 140us ohne Anzeige
             sendcounter++;
-            //            lcd_gotoxy(16,1);
-            //            lcd_puts("TX");
+            lcd_gotoxy(16,1);
+            lcd_puts("TX");
             wl_module_config_register(STATUS, (1<<TX_DS)); //Clear Interrupt Bit
             PTX=0;
             //OSZIA_HI;
@@ -1326,7 +1336,7 @@ int main (void)
             //lcd_putint12((ptwert/PT_ADC_FAKTOR));
             ptwert /= PT_ADC_FAKTOR;
             ptwert -= PT_OFFSET;
-            lcd_gotoxy(10,1);
+            lcd_gotoxy(10,2);
             //lcd_putc(' ');
             lcd_putc('t');
             //lcd_putc(' ');
@@ -1840,7 +1850,7 @@ int main (void)
             //				lcd_gotoxy(18,1);
             //				lcd_puts("  ");		// Tastenanzeige loeschen
             
-         }//if TastaturCount	
+         }//if TastaturCount
          
       }
    }
