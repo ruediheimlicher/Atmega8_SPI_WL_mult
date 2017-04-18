@@ -251,6 +251,7 @@ volatile uint8_t wl_send_status=0;
 
 
 volatile uint8_t pipenummer = 0;
+volatile uint8_t aktuelle_pipenummer = 0;
 
 uint8_t  WL_PIPE  = 2;
 
@@ -914,6 +915,7 @@ int main (void)
       // MARK: WL Loop
       if (wl_spi_status & (1<<WL_ISR_RECV)) // in ISR gesetzt, etwas ist angekommen, Master fragt nach Daten
       {
+         
          wl_recv_status |= (1<<7);
          pipenummer=0;
          //OSZIA_LO;
@@ -1026,15 +1028,16 @@ int main (void)
                if (rec==0x10)
                {
                   wl_recv_status |= (1<<1);
-                  delay_ms(3);
-                  uint8_t readstatus = wl_module_get_data((void*)&wl_data); // Reads wl_module_PAYLOAD bytes into data array
                   delay_ms(10);
+                  uint8_t readstatus = wl_module_get_data((void*)&wl_data); // Reads wl_module_PAYLOAD bytes into data array
+                  delay_ms(20);
+                  aktuelle_pipenummer = wl_data[8];
                }
                
                wl_module_config_register(STATUS, (1<<RX_DR)); //Clear Interrupt Bit
                //wl_module_config_register(STATUS, 0xFF);
                wl_recv_status |= (1<<0);
-               delay_ms(10);                                   // kritisch
+               delay_ms(20);                                   // kritisch
                uint8_t i;
                
                
@@ -1191,16 +1194,18 @@ int main (void)
             //            _delay_us(10);
             //            wl_module_CE_lo;
          }
+         
+         
          wl_module_get_one_byte(FLUSH_TX);
         //wl_module_get_one_byte(FLUSH_RX);
-         delay_ms(10);
+         delay_ms(20);
          //wl_module_config_register(STATUS, 0xFF);
          OSZIA_HI;
          //wl_module_config_register(STATUS, 0xFF);
          lcd_gotoxy(16,0);
          lcd_putc('r');
-         lcd_puthex(wl_data[8]); // loop_pipenummer
-
+         lcd_puthex(aktuelle_pipenummer); // loop_pipenummer
+         
       } // end ISR abarbeiten
       
       
