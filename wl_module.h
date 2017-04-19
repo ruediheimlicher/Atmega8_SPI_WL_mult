@@ -36,6 +36,11 @@ extern volatile uint8_t PTX;
 
 // WL-Module settings
 #define wl_module_CH			100
+
+#define wl_module_Temp_channel          100
+#define wl_module_ADC_channel           80
+
+
 #define wl_module_PAYLOAD		16
 #define wl_module_RF_DR_HIGH	0		//0 = 1Mbps, 1 = 2Mpbs
 #define wl_module_RF_SETUP		(RF_SETUP_RF_PWR_0 | RF_SETUP_RF_DR_250)
@@ -106,7 +111,9 @@ extern uint8_t wl_module_get_rx_pw(uint8_t rxpipenum);
 extern void wl_module_set_tx_addr(uint8_t * address, uint8_t len);
 extern void wl_module_set_rx_addr(uint8_t * address, uint8_t len, uint8_t rxpipenum);
 extern void wl_module_tx_config(uint8_t tx_nr);
+extern void wl_module_tx_config_channel(uint8_t tx_nr,uint8_t channel);
 extern void wl_module_rx_config(void);
+extern void wl_module_rx_config_channel(uint8_t channel);
 extern void wl_module_get_rx_addr(uint8_t * data, uint8_t rxpipenum, uint8_t len);
 extern uint8_t wl_module_get_rx_pipe(void);
 extern uint8_t wl_module_get_rx_pipe_from_status(uint8_t status);

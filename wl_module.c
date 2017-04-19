@@ -159,6 +159,8 @@ extern void wl_module_rx_config()
    wl_module_CE_hi;     // Listening for pakets
 }
 
+
+
 // Sets the wl-module as one of the six sender. Define for every sender a unique Number (wl_module_TX_NR_x)
 // when you call this Function.
 //  Each TX will get a TX-Address corresponding to the RX-Device.
@@ -226,6 +228,115 @@ extern void wl_module_tx_config(uint8_t tx_nr)
     wl_module_CE_hi;     // Listening for pakets
     */
 }
+
+extern void wl_module_rx_config_channel(uint8_t channel)
+// Sets the important registers in the wl-module and powers the module
+// in receiving mode
+{
+   uint8_t data[5];
+   // Set RF channel
+   wl_module_config_register(RF_CH,channel);
+   // Set data speed & Output Power configured in wl_module.h
+   wl_module_config_register(RF_SETUP,wl_module_RF_SETUP);
+   //Enable all RX Data-Pipes
+   wl_module_config_register(EN_RXADDR, EN_RXADDR_ERX_ALL);
+   //Set RX_Address Pipe 0
+   data[0]= data[1]= data[2]= data[3]= data[4]= RX_ADDR_P0_B0_DEFAULT_VAL;
+   wl_module_set_rx_addr(data, 5, 0);
+   //Set RX_Address Pipe 1
+   data[0]= data[1]= data[2]= data[3]= data[4]= RX_ADDR_P1_B0_DEFAULT_VAL;
+   wl_module_set_rx_addr(data, 5, 1);
+   //Set RX_Address Pipe 2-5
+   data[0]=RX_ADDR_P2_DEFAULT_VAL;
+   wl_module_set_rx_addr(data, 1, 2);
+   data[0]=RX_ADDR_P3_DEFAULT_VAL;
+   wl_module_set_rx_addr(data, 1, 3);
+   data[0]=RX_ADDR_P4_DEFAULT_VAL;
+   wl_module_set_rx_addr(data, 1, 4);
+   data[0]=RX_ADDR_P5_DEFAULT_VAL;
+   wl_module_set_rx_addr(data, 1, 5);
+   // Set length of incoming payload
+   wl_module_config_register(RX_PW_P0, wl_module_PAYLOAD);
+   wl_module_config_register(RX_PW_P1, wl_module_PAYLOAD);
+   wl_module_config_register(RX_PW_P2, wl_module_PAYLOAD);
+   wl_module_config_register(RX_PW_P3, wl_module_PAYLOAD);
+   wl_module_config_register(RX_PW_P4, wl_module_PAYLOAD);
+   wl_module_config_register(RX_PW_P5, wl_module_PAYLOAD);
+   
+   
+   // Start receiver
+   PTX = 0;        // Start in receiving mode
+   RX_POWERUP;     // Power up in receiving mode
+   wl_module_CE_hi;     // Listening for pakets
+}
+
+
+extern void wl_module_tx_config_channel(uint8_t tx_nr,uint8_t channel)
+{
+   uint8_t tx_addr[5];
+   
+   // Set RF channel
+   wl_module_config_register(RF_CH,channel);
+   // Set data speed & Output Power configured in wl_module.h
+   wl_module_config_register(RF_SETUP,wl_module_RF_SETUP);
+   //Config the CONFIG Register (Mask IRQ, CRC, etc)
+   wl_module_config_register(CONFIG, wl_module_CONFIG);
+   // Set length of incoming payload
+   //wl_module_config_register(RX_PW_P0, wl_module_PAYLOAD);
+   
+   // 0x20: 750us delay, 0x0F: 15 retries
+   wl_module_config_register(SETUP_RETR,(SETUP_RETR_ARD_2000 | SETUP_RETR_ARC_15));
+   
+   //set the TX address for the pipe with the same number as the iteration
+			switch(tx_nr)
+			{
+            case 0: //setup TX address as default RX address for pipe 0 (E7:E7:E7:E7:E7)
+               tx_addr[0] = tx_addr[1] = tx_addr[2] = tx_addr[3] = tx_addr[4] = RX_ADDR_P0_B0_DEFAULT_VAL;
+               wl_module_set_TADDR(tx_addr);
+               wl_module_set_RADDR(tx_addr);
+               break;
+            case 1: //setup TX address as default RX address for pipe 1 (C2:C2:C2:C2:C2)
+               tx_addr[0] = tx_addr[1] = tx_addr[2] = tx_addr[3] = tx_addr[4] = RX_ADDR_P1_B0_DEFAULT_VAL;
+               wl_module_set_TADDR(tx_addr);
+               wl_module_set_RADDR(tx_addr);
+               break;
+            case 2: //setup TX address as default RX address for pipe 2 (C2:C2:C2:C2:C3)
+               tx_addr[1] = tx_addr[2] = tx_addr[3] = tx_addr[4] = RX_ADDR_P1_B0_DEFAULT_VAL;
+               tx_addr[0] = RX_ADDR_P2_DEFAULT_VAL;
+               wl_module_set_TADDR(tx_addr);
+               wl_module_set_RADDR(tx_addr);
+               break;
+            case 3: //setup TX address as default RX address for pipe 3 (C2:C2:C2:C2:C4)
+               tx_addr[1] = tx_addr[2] = tx_addr[3] = tx_addr[4] = RX_ADDR_P1_B0_DEFAULT_VAL;
+               tx_addr[0] = RX_ADDR_P3_DEFAULT_VAL;
+               wl_module_set_TADDR(tx_addr);
+               wl_module_set_RADDR(tx_addr);
+               break;
+            case 4: //setup TX address as default RX address for pipe 4 (C2:C2:C2:C2:C5)
+               tx_addr[1] = tx_addr[2] = tx_addr[3] = tx_addr[4] = RX_ADDR_P1_B0_DEFAULT_VAL;
+               tx_addr[0] = RX_ADDR_P4_DEFAULT_VAL;
+               wl_module_set_TADDR(tx_addr);
+               wl_module_set_RADDR(tx_addr);
+               break;
+            case 5: //setup TX address as default RX address for pipe 5 (C2:C2:C2:C2:C6)
+               tx_addr[1] = tx_addr[2] = tx_addr[3] = tx_addr[4] = RX_ADDR_P1_B0_DEFAULT_VAL;
+               tx_addr[0] = RX_ADDR_P5_DEFAULT_VAL;
+               wl_module_set_TADDR(tx_addr);
+               wl_module_set_RADDR(tx_addr);
+               break;
+         }
+   
+   PTX =0;
+   TX_POWERUP;
+   wl_module_CE_hi;     // Listening for pakets
+   
+   // Start receiver
+   PTX = 0;        // Start in receiving mode
+   RX_POWERUP;     // Power up in receiving mode
+   wl_module_CE_hi;     // Listening for pakets
+   
+}
+
 
 //sets the TX address in the TX_ADDR register
 //unsigned char * address is the actual address to be used.  It should be sized

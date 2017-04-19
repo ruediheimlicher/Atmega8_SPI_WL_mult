@@ -251,9 +251,12 @@ volatile uint8_t wl_send_status=0;
 
 
 volatile uint8_t pipenummer = 0;
-volatile uint8_t aktuelle_pipenummer = 0;
+volatile uint8_t loop_channelnummer = 0;
 
 uint8_t  WL_PIPE  = 2;
+
+volatile uint8_t module_channel[4] = {wl_module_Temp_channel,wl_module_ADC_channel,wl_module_Temp_channel,wl_module_ADC_channel};
+
 
 //volatile char text[] = {'*','M','a','s','t','e','r','*'};
 char* text = "* Master *";
@@ -879,7 +882,19 @@ int main (void)
    
    sei();
    
-   wl_module_rx_config();
+   if (PIND & (1<<6))
+   {
+      WL_PIPE  = 1;
+      loop_channelnummer=1;
+   }
+   else
+   {
+      WL_PIPE  = 1;
+      loop_channelnummer=0;
+   }
+
+   
+   wl_module_rx_config_channel(module_channel[loop_channelnummer]);
    
    delay_ms(50);
    wl_module_CE_hi;
@@ -908,6 +923,17 @@ int main (void)
    sei();
    while (1)
    {
+      if (PIND & (1<<6))
+      {
+         WL_PIPE  = 1;
+         loop_channelnummer=1;
+      }
+      else
+      {
+         WL_PIPE  = 1;
+         loop_channelnummer=0;
+      }
+      loop_channelnummer=1;
       //  PORTC |= (1<<0);
       loopCount0 ++;
       //_delay_ms(2);
@@ -917,18 +943,16 @@ int main (void)
       {
          
          wl_recv_status |= (1<<7);
-         pipenummer=0;
+         pipenummer=1;
          //OSZIA_LO;
  //        lcd_clr_line(1);
-         if (PIND & (1<<6))
-         {
-            WL_PIPE  = 2;
-         }
-         else
-         {
-            WL_PIPE  = 1;
-         }
-         
+         lcd_gotoxy(14,3);
+         lcd_putc('c');
+         lcd_puthex(module_channel[loop_channelnummer]); // counter von master
+         lcd_gotoxy(0,3);
+         lcd_putc('c');
+         lcd_puthex(wl_data[8]); // counter von master
+
          
          if (int0counter < 0x2F)
          {
@@ -942,7 +966,7 @@ int main (void)
          
          lcd_gotoxy(0,0);
          lcd_putc('i');
-         lcd_puthex(int0counter);
+         lcd_puthex(int0counter); // IRQ-counter
          wl_recv_status |= (1<<6);
          
          
@@ -958,24 +982,24 @@ int main (void)
          wl_status = wl_module_get_status();
          delay_ms(20);
          wl_recv_status |= (1<<5);
-         //lcd_gotoxy(18,0);
-         //lcd_puthex(wl_status);
+         lcd_gotoxy(4,3);
+         lcd_puthex(wl_status);
          //lcd_putc('b');
          pipenummer = wl_module_get_rx_pipe_from_status(wl_status);
          
          delay_ms(20);
          wl_recv_status |= (1<<4);
          
-         lcd_gotoxy(12,1);
+         lcd_gotoxy(0,1);
          lcd_putc('p');
          if (pipenummer==7)
          {
-            lcd_gotoxy(13,1);
+            lcd_gotoxy(1,1);
             lcd_putint1(pipenummer);
          }
          else
          {
-            lcd_gotoxy(13,1);
+            lcd_gotoxy(1,1);
             lcd_putc(' ');
             lcd_putint1(pipenummer);
 
@@ -989,12 +1013,13 @@ int main (void)
           lcd_puts("  ");
           */
          
-    //     if (pipenummer == WL_PIPE) // Request ist fuer uns, Data schicken
+         if (pipenummer  <7) // Request ist fuer uns, Data schicken
          {
             
             //           OSZIA_LO;
-            //lcd_gotoxy(12,1);
-            // lcd_putc('c');
+            lcd_gotoxy(6,1);
+            lcd_putc('c');
+            lcd_puthex(wl_status);
             //            lcd_puts("p ");
             
             //            lcd_gotoxy(11,0);
@@ -1008,6 +1033,12 @@ int main (void)
                lcd_gotoxy(16,2);
                lcd_putc('F');
                wl_module_config_register(STATUS, (1<<TX_FULL)); //Clear Interrupt Bit
+            }
+            if (wl_status & (1<<TX_DS))
+            {
+               lcd_gotoxy(16,2);
+               lcd_puts("TX");
+               wl_module_config_register(STATUS, (1<<TX_DS)); //Clear Interrupt Bit
             }
             
             
@@ -1031,7 +1062,7 @@ int main (void)
                   delay_ms(10);
                   uint8_t readstatus = wl_module_get_data((void*)&wl_data); // Reads wl_module_PAYLOAD bytes into data array
                   delay_ms(20);
-                  aktuelle_pipenummer = wl_data[8];
+                  //loop_channelnummer = wl_data[8];
                }
                
                wl_module_config_register(STATUS, (1<<RX_DR)); //Clear Interrupt Bit
@@ -1091,7 +1122,7 @@ int main (void)
                   wl_spi_status &= ~(1<<WL_SEND_REQUEST);
                   
                   // MARK: WL send
-                  wl_module_tx_config(WL_PIPE); // neue Daten senden an Master auf pipe WL_PIPE
+                  wl_module_tx_config_channel(WL_PIPE,module_channel[loop_channelnummer]); // neue Daten senden an Master auf pipe WL_PIPE
                   delay_ms(10);                 // kritisch
                   
                   //lcd_putc('u');
@@ -1102,7 +1133,9 @@ int main (void)
                   //lcd_putc('v');
                   delay_ms(20); // kritisch
                   
-                  wl_module_rx_config(); // empfangen wieder einstellen
+                  //wl_module_rx_config(); // empfangen wieder einstellen
+                  wl_module_rx_config_channel(module_channel[loop_channelnummer]);
+
                   //uint8_t tx_status = wl_module_get_status();
                   //wl_module_get_one_byte(FLUSH_RX);
                   delay_ms(20);
@@ -1158,6 +1191,8 @@ int main (void)
           //        lcd_putint1(pipenummer);
              
           wl_module_rx_config(); // empfangen wieder einstellen
+   //wl_module_rx_config_channel(module_channel[loop_channelnummer]);
+
           //
           }
    */
@@ -1204,7 +1239,7 @@ int main (void)
          //wl_module_config_register(STATUS, 0xFF);
          lcd_gotoxy(16,0);
          lcd_putc('r');
-         lcd_puthex(aktuelle_pipenummer); // loop_pipenummer
+         lcd_puthex(loop_channelnummer); // loop_pipenummer
          
       } // end ISR abarbeiten
       
@@ -1252,8 +1287,10 @@ int main (void)
             
             lcd_gotoxy(8,0);
             lcd_putc('s');
-            lcd_puthex(sendcounter); // counter von master
+            lcd_puthex(sendcounter); // counter von gesendeten Daten von mir
+
             
+
             
             // Anzeige PWM
             /*
@@ -1469,7 +1506,7 @@ int main (void)
             payload[6] = 8;
             payload[7] = 2;
             
-            payload[9] = WL_PIPE;
+            payload[9] = loop_channelnummer;
             //            payload[10] = adc2wert & 0x00FF;
             //           payload[11] = (adc2wert & 0xFF00)>>8;
 //            payload[10] = temperatur2 & 0x00FF;
