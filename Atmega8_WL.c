@@ -933,7 +933,7 @@ int main (void)
          WL_PIPE  = 1;
          loop_channelnummer=0;
       }
-      loop_channelnummer=1;
+     // loop_channelnummer=1;
       //  PORTC |= (1<<0);
       loopCount0 ++;
       //_delay_ms(2);
