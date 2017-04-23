@@ -945,7 +945,7 @@ int main (void)
          wl_recv_status |= (1<<7);
          pipenummer=1;
          //OSZIA_LO;
- //        lcd_clr_line(1);
+
          lcd_gotoxy(14,3);
          lcd_putc('c');
          lcd_puthex(module_channel[loop_channelnummer]); // counter von master
@@ -984,12 +984,12 @@ int main (void)
          wl_recv_status |= (1<<5);
          lcd_gotoxy(4,3);
          lcd_puthex(wl_status);
-         //lcd_putc('b');
          pipenummer = wl_module_get_rx_pipe_from_status(wl_status);
          
          delay_ms(20);
          wl_recv_status |= (1<<4);
          
+         /*
          lcd_gotoxy(0,1);
          lcd_putc('p');
          if (pipenummer==7)
@@ -1002,16 +1002,9 @@ int main (void)
             lcd_gotoxy(1,1);
             lcd_putc(' ');
             lcd_putint1(pipenummer);
-
          }
-         //lcd_gotoxy(12,0);
-         //lcd_puts("    ");
-         /*
-          lcd_gotoxy(16,1);
-          lcd_puts("  ");
-          lcd_gotoxy(0,1);
-          lcd_puts("  ");
-          */
+        */
+         
          
          if (pipenummer  <7) // Request ist fuer uns, Data schicken
          {
@@ -1020,15 +1013,7 @@ int main (void)
             lcd_gotoxy(6,1);
             lcd_putc('c');
             lcd_puthex(wl_status);
-            //            lcd_puts("p ");
-            
-            //            lcd_gotoxy(11,0);
-            //lcd_puts("p ok");
-            //            lcd_putc('+');
-            //lcd_gotoxy(0,0);
-            //delay_ms(2);
-            //lcd_puts("          ");
-            if (wl_status & (1<<TX_FULL))
+             if (wl_status & (1<<TX_FULL))
             {
                lcd_gotoxy(16,2);
                lcd_putc('F');
@@ -1467,7 +1452,7 @@ int main (void)
                lcd_putint(ptwert);
             }
             lcd_putc('*');
-            
+            //ptwert *= 4;
             // end lookup
             
             //            lcd_putc(' ');
