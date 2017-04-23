@@ -842,6 +842,127 @@ ISR (SPI_STC_vect)
   // SPDR = data;
 }
 
+uint16_t read_KTY(void)
+{
+   // KTY
+   uint16_t adc3wert = readKanal(3);
+   
+   //            lcd_gotoxy(0,0);
+   //lcd_puthex(adc3wert&0x00FF);
+   //lcd_puthex((adc3wert&0xFF00)>>8);
+   //lcd_gotoxy(6,2);
+   //            lcd_putc('k');
+   //            lcd_putint12(adc3wert);
+   //   adc3wert-=6;
+   /*
+    #define KTY_OFFSET   30             // Offset, Start bei bei -30 °C
+    #define ADC_OFFSET   204            // Startwert der ADC-Messung
+    #define KTY_FAKTOR   96             // 0x60, Multiplikator
+    // pgm_read_word(&KTY[xy])
+    */
+   uint16_t tableindex = ((adc3wert - ADC_OFFSET)>>3); // abrunden auf Intervalltakt
+   //            lcd_putc(' ');
+   // lcd_putint(tableindex);
+   uint8_t col = (adc3wert - ADC_OFFSET) & 0x07;
+   // lcd_putc(' ');
+   //lcd_putint2(col);
+   uint16_t ktywert = pgm_read_word(&KTY[tableindex]); // Wert in Tabelle, unterer Wert
+   //            lcd_putint12(ktywert);
+   
+   if (col) // nicht exakter wert, interpolieren
+   {
+      uint16_t diff = pgm_read_word(&KTY[tableindex+1])-ktywert;
+      //diff = (diff * col)<<3;
+      ktywert += (diff * col)>>3;
+   }
+   
+   //            lcd_putc(' ');
+   //            lcd_putint12((ktywert));
+   
+   //     lcd_putc(' ');
+   //     lcd_putint12((ktywert/KTY_FAKTOR)-KTY_OFFSET);
+   
+   return ktywert;
+}
+
+uint16_t read_PT(void)
+{
+   // PT1000
+   lcd_gotoxy(0,2);
+   lcd_puts("k4 ");
+   PT_LO;
+   VREF_Quelle = ADC_REF_POWER;
+   uint8_t i=0;
+   for (i=0;i<16;i++)
+   {
+      readKanal(4);
+   }
+   
+   //delay_ms(10);
+   
+   //_delay_us(200);
+   //OSZIA_LO;
+   uint16_t adc4wert = readKanal(4);
+   // OSZIA_HI;
+   PT_HI;
+   lcd_putint12(adc4wert);
+   
+   
+   
+   
+   //uint32_t temperatur4 =  adc4wert*VREF; // *256/1024, unkalibriert
+   //temperatur4 /= 32;
+   
+   //lcd_putc(' ');
+   //lcd_putint16(temperatur4 & 0xFFFF);
+   //
+   //lcd_putint(temperatur4/10);
+   //lcd_putc('.');
+   //lcd_putint1(temperatur4%10);
+   
+   // lookup
+   //lcd_gotoxy(0,2);
+   uint16_t pttableindex = ((adc4wert - PT_ADC_OFFSET)>>3); // abrunden auf Intervalltakt
+   //lcd_putc(' ');
+   pttableindex = adc4wert - PT_ADC_OFFSET;
+   //lcd_putint(pttableindex);
+   
+   
+   //lcd_putint2(pttableindex);
+   
+   //uint8_t ptcol = (pttableindex) & 0x07;
+   //lcd_putc(' ');
+   //lcd_putint1(ptcol);
+   //lcd_putc('*');
+   
+   //uint16_t ptwert = pgm_read_word(&PT[8*pttableindex+ptcol]); // Wert in Tabelle
+   uint16_t ptwert = pgm_read_word(&PT[adc4wert - PT_ADC_OFFSET]); // Wert in Tabelle
+   //lcd_putint12(ptwert);
+   
+   //lcd_putc('*');
+   //lcd_putint12((ptwert/PT_ADC_FAKTOR));
+   ptwert /= PT_ADC_FAKTOR;
+   ptwert -= PT_OFFSET;
+   lcd_gotoxy(10,2);
+   //lcd_putc(' ');
+   lcd_putc('t');
+   //lcd_putc(' ');
+   
+   //lcd_putc('*');
+   if (ptwert < 100)
+   {
+      //lcd_putc(' ');
+      lcd_putint2(ptwert);
+   }
+   else
+   {
+      lcd_putint(ptwert);
+   }
+   lcd_putc('*');
+   //ptwert *= 4;
+   return ptwert;
+}
+
 
 
 int main (void)
@@ -1032,7 +1153,6 @@ int main (void)
                 lcd_putint1(wl_data[i]);
                 }
                 */
-               //lcd_putc(' ');
                // Kontrolle: Data vom teensy
                //OSZIA_LO;
                uint16_t temperatur = (wl_data[11]<<8);
@@ -1059,7 +1179,6 @@ int main (void)
                if (wl_spi_status & (1<<WL_SEND_REQUEST)) // senden starten
                {
                   //wl_recv_status |= (1<<4);
-                  //lcd_gotoxy(8,1);
                   wl_spi_status &= ~(1<<WL_SEND_REQUEST);
                   
                   // MARK: WL send
@@ -1073,33 +1192,16 @@ int main (void)
                   
                   // E
                   delay_ms(wl_delay); // kritisch
-                  
                   wl_module_send(payload,wl_module_PAYLOAD);
-                  //lcd_putc('v');
-                  
+
                   // F
                   delay_ms(wl_delay); // kritisch
                   
                   //wl_module_rx_config(); // empfangen wieder einstellen
                   wl_module_rx_config_channel(module_channel[loop_channelnummer]);
-
-                  //uint8_t tx_status = wl_module_get_status();
-                  //wl_module_get_one_byte(FLUSH_RX);
-                  
                   // G
                   delay_ms(wl_delay);
                   wl_module_get_one_byte(FLUSH_RX);
-                  //                  lcd_gotoxy(0,0);
-                  //                 lcd_puthex(sendcounter);// 3ms
-                  
-                  
-                  //lcd_putc('s');
-                  //lcd_gotoxy(0,1);
-                  
-                  //lcd_puthex(tx_status);
-                  //lcd_putc(' ');
-                  
-                  
                   maincounter++;
                   PTX=0;
                   
@@ -1110,42 +1212,9 @@ int main (void)
                
                //OSZIA_HI;
             } // if RX
-            /*
-             else
-             {
-             lcd_gotoxy(10,1);
-             lcd_puts("***");
-             
-             }
-             */
-            //OSZIA_HI;
-            
-         } // if pipe
+          } // if pipe
          
-  /*
-          else
-          {
-            // wl_module_send(payload,wl_module_PAYLOAD);
-             //lcd_putc('v');
-             delay_ms(20); // kritisch
-
-          wl_module_config_register(STATUS, (1<<RX_DR));
-          wl_module_config_register(STATUS, (1<<TX_DS));
-          wl_module_get_one_byte(FLUSH_RX);
-          delay_ms(10);
-          
-          
-          //         lcd_gotoxy(12,1);
-          //        lcd_puts("p-");
-          //        lcd_putint1(pipenummer);
-             
-          wl_module_rx_config(); // empfangen wieder einstellen
-   //wl_module_rx_config_channel(module_channel[loop_channelnummer]);
-
-          //
-          }
-   */
-         if (wl_status & (1<<TX_DS)) // IRQ: Package has been sent
+          if (wl_status & (1<<TX_DS)) // IRQ: Package has been sent
          {
             wl_recv_status |= (1<<3);
             //OSZIA_LO; // 50 ms mit Anzeige, 140us ohne Anzeige
@@ -1154,7 +1223,7 @@ int main (void)
             // lcd_puts("TX");
             
             wl_module_config_register(STATUS, (1<<TX_DS)); //Clear Interrupt Bit
-            delay_ms(10);
+            delay_ms(wl_delay);
             PTX=0;
             //wl_module_get_one_byte(FLUSH_TX);
             //OSZIA_HI;
@@ -1181,8 +1250,7 @@ int main (void)
          
          
          wl_module_get_one_byte(FLUSH_TX);
-        //wl_module_get_one_byte(FLUSH_RX);
-         delay_ms(20);
+         delay_ms(wl_delay);
          //wl_module_config_register(STATUS, 0xFF);
          OSZIA_HI;
          //wl_module_config_register(STATUS, 0xFF);
@@ -1196,7 +1264,7 @@ int main (void)
       
       
       
-      if (loopCount0 >=0xFE)
+      if (loopCount0 >=0xE0)
       {
          
          loopCount1++;
@@ -1343,63 +1411,10 @@ int main (void)
             
             //     lcd_putc(' ');
             //     lcd_putint12((ktywert/KTY_FAKTOR)-KTY_OFFSET);
+            
+            
             // MARK: PT1000
-            // PT1000
-            lcd_gotoxy(0,2);
-            lcd_puts("k4 ");
-            PT_LO;
-            VREF_Quelle = ADC_REF_POWER;
-            uint8_t i=0;
-            for (i=0;i<16;i++)
-            {
-               readKanal(4);
-            }
-            
-            //delay_ms(10);
-            
-            //_delay_us(200);
-            //OSZIA_LO;
-            uint16_t adc4wert = readKanal(4);
-            // OSZIA_HI;
-            PT_HI;
-            lcd_putint12(adc4wert);
-            
-            
-            
-            
-            //uint32_t temperatur4 =  adc4wert*VREF; // *256/1024, unkalibriert
-            //temperatur4 /= 32;
-            
-            //lcd_putc(' ');
-            //lcd_putint16(temperatur4 & 0xFFFF);
-            //
-            //lcd_putint(temperatur4/10);
-            //lcd_putc('.');
-            //lcd_putint1(temperatur4%10);
-            
-            // lookup
-            //lcd_gotoxy(0,2);
-            uint16_t pttableindex = ((adc4wert - PT_ADC_OFFSET)>>3); // abrunden auf Intervalltakt
-            //lcd_putc(' ');
-            pttableindex = adc4wert - PT_ADC_OFFSET;
-            //lcd_putint(pttableindex);
-            
-            
-            //lcd_putint2(pttableindex);
-            
-            //uint8_t ptcol = (pttableindex) & 0x07;
-            //lcd_putc(' ');
-            //lcd_putint1(ptcol);
-            //lcd_putc('*');
-            
-            //uint16_t ptwert = pgm_read_word(&PT[8*pttableindex+ptcol]); // Wert in Tabelle
-            uint16_t ptwert = pgm_read_word(&PT[adc4wert - PT_ADC_OFFSET]); // Wert in Tabelle
-            //lcd_putint12(ptwert);
-            
-            //lcd_putc('*');
-            //lcd_putint12((ptwert/PT_ADC_FAKTOR));
-            ptwert /= PT_ADC_FAKTOR;
-            ptwert -= PT_OFFSET;
+            uint16_t ptwert = read_PT();
             lcd_gotoxy(10,2);
             //lcd_putc(' ');
             lcd_putc('t');
@@ -1458,8 +1473,8 @@ int main (void)
             payload[9] = loop_channelnummer;
             //            payload[10] = adc2wert & 0x00FF;
             //           payload[11] = (adc2wert & 0xFF00)>>8;
-//            payload[10] = temperatur2 & 0x00FF;
-//            payload[11] = (temperatur2 & 0xFF00)>>8;
+            payload[10] = ktywert & 0x00FF;
+            payload[11] = (ktywert & 0xFF00)>>8;
             
             //            payload[12] = adc3wert & 0x00FF;
             //            payload[13] = (adc3wert & 0xFF00)>>8;
