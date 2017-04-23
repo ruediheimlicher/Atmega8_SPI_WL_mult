@@ -515,8 +515,8 @@ void deviceinit(void)
 //	MANUELL_DDR |= (1<<MANUELLPIN);		//Pin 5 von PORT D als Ausgang fuer Manuell
 	//MANUELL_PORT &= ~(1<<MANUELLPIN);
    // prov Einstellung Pipenummer: 1: pipenummer = 2 0:pipenummer = 1
-   DDRD &= ~(1<<6); //
-   PORTD |= (1<<6);
+//   DDRD &= ~(1<<6); //
+//   PORTD |= (1<<6);
 
    
    PWM_DETECT_DDR &= ~(1<<PWM_DETECT);
@@ -881,18 +881,9 @@ int main (void)
    _delay_ms(50);
    
    sei();
+   WL_PIPE  = 1;
    
-   if (PIND & (1<<6))
-   {
-      WL_PIPE  = 1;
-      loop_channelnummer=1;
-   }
-   else
-   {
-      WL_PIPE  = 1;
-      loop_channelnummer=0;
-   }
-
+      loop_channelnummer=LOOP_CHANNEL;
    
    wl_module_rx_config_channel(module_channel[loop_channelnummer]);
    

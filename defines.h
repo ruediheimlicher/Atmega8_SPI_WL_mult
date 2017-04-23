@@ -71,6 +71,9 @@
 //#define INT0_PIN                             PD2
 #define INT1_PIN                             PD3
 
+
+
+#define LOOP_CHANNEL 0
 // Port fuer Chip select
 #define SPI_WL_PORT                          PORTC
 #define SPI_WL_DDR                           DDRC
