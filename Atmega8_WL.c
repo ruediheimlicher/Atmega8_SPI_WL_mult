@@ -1374,44 +1374,7 @@ int main (void)
             */
             
             // MARK: KTY
-            // KTY
-            uint16_t adc3wert = readKanal(3);
-            
-            //            lcd_gotoxy(0,0);
-            //lcd_puthex(adc3wert&0x00FF);
-            //lcd_puthex((adc3wert&0xFF00)>>8);
-            //lcd_gotoxy(6,2);
-            //            lcd_putc('k');
-            //            lcd_putint12(adc3wert);
-            //   adc3wert-=6;
-            /*
-             #define KTY_OFFSET   30             // Offset, Start bei bei -30 °C
-             #define ADC_OFFSET   204            // Startwert der ADC-Messung
-             #define KTY_FAKTOR   96             // 0x60, Multiplikator
-             // pgm_read_word(&KTY[xy])
-             */
-            uint16_t tableindex = ((adc3wert - ADC_OFFSET)>>3); // abrunden auf Intervalltakt
-            //            lcd_putc(' ');
-            // lcd_putint(tableindex);
-            uint8_t col = (adc3wert - ADC_OFFSET) & 0x07;
-            // lcd_putc(' ');
-            //lcd_putint2(col);
-            uint16_t ktywert = pgm_read_word(&KTY[tableindex]); // Wert in Tabelle, unterer Wert
-            //            lcd_putint12(ktywert);
-            
-            if (col) // nicht exakter wert, interpolieren
-            {
-               uint16_t diff = pgm_read_word(&KTY[tableindex+1])-ktywert;
-               //diff = (diff * col)<<3;
-               ktywert += (diff * col)>>3;
-            }
-            
-            //            lcd_putc(' ');
-            //            lcd_putint12((ktywert));
-            
-            //     lcd_putc(' ');
-            //     lcd_putint12((ktywert/KTY_FAKTOR)-KTY_OFFSET);
-            
+             uint16_t ktywert = read_KTY();
             
             // MARK: PT1000
             uint16_t ptwert = read_PT();
