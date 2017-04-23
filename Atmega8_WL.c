@@ -883,7 +883,7 @@ int main (void)
    sei();
    WL_PIPE  = 1;
    
-      loop_channelnummer=LOOP_CHANNEL;
+   loop_channelnummer=LOOP_CHANNEL;
    
    wl_module_rx_config_channel(module_channel[loop_channelnummer]);
    
