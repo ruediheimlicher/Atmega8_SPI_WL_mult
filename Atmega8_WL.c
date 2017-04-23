@@ -515,8 +515,8 @@ void deviceinit(void)
 //	MANUELL_DDR |= (1<<MANUELLPIN);		//Pin 5 von PORT D als Ausgang fuer Manuell
 	//MANUELL_PORT &= ~(1<<MANUELLPIN);
    // prov Einstellung Pipenummer: 1: pipenummer = 2 0:pipenummer = 1
-//   DDRD &= ~(1<<6); //
-//   PORTD |= (1<<6);
+   DDRD &= ~(1<<6); //
+   PORTD |= (1<<6);
 
    
    PWM_DETECT_DDR &= ~(1<<PWM_DETECT);
@@ -971,13 +971,13 @@ int main (void)
          //lcd_gotoxy(0,1);
          //lcd_putc('a');
          wl_status = wl_module_get_status();
-         delay_ms(20);
+         delay_ms(10);
          wl_recv_status |= (1<<5);
          lcd_gotoxy(4,3);
          lcd_puthex(wl_status);
          pipenummer = wl_module_get_rx_pipe_from_status(wl_status);
          
-         delay_ms(20);
+         delay_ms(10);
          wl_recv_status |= (1<<4);
          
          /*
