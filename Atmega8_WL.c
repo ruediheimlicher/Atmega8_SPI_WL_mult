@@ -842,6 +842,51 @@ ISR (SPI_STC_vect)
   // SPDR = data;
 }
 
+uint16_t read_LM35(void)
+{
+   VREF_Quelle = ADC_REF_INTERNAL;
+   uint8_t i=0;
+   for (i=0;i<16;i++) // 3.5ms
+   {
+      readKanal(2);
+   }
+   uint16_t adc2wert = readKanal(2);
+   //lcd_puthex(adc2wert&0x00FF);
+   //lcd_puthex((adc2wert&0xFF00)>>8);
+   lcd_gotoxy(0,3);
+   lcd_puts("k2 ");
+   lcd_putint12(adc2wert);
+   
+   //lcd_putint12(adcwert);
+   //uint16_t temperatur2 =  adc2wert*10/4; // *256/1024, unkalibriert
+   //lcd_gotoxy(12,1);
+   //lcd_putint12(temperatur2);
+   
+   //uint32_t temperatur2 =  adc2wert*265; // *265/1024, unkalibriert
+   // uint16_t t1 = adc2wert*VREF;
+   
+   uint32_t temperatur2 = adc2wert;
+   temperatur2 *=VREF;
+   //t1 = t1/0x20;
+   //lcd_gotoxy(0,3);
+   //lcd_putint16(temperatur2);
+   temperatur2 = temperatur2/0x20;
+   //lcd_gotoxy(8,1);
+   //lcd_putint12(temperatur2);
+   temperatur2 = 10*temperatur2/0x20;
+   lcd_gotoxy(8,3);
+   lcd_putint12(temperatur2&0xFFFF);
+   
+   lcd_gotoxy(13,3);
+   lcd_putint12(temperatur2/10);
+   lcd_putc('.');
+   lcd_putint1(temperatur2%10);
+   
+   //lcd_gotoxy(0,1);
+   //_delay_us(300);
+   return temperatur2 & 0xFFFF;
+}
+
 uint16_t read_KTY(void)
 {
    // KTY
@@ -1330,50 +1375,9 @@ int main (void)
             // MARK: ADC Loop
             
             // MARK:  LM335
-            /*
-            VREF_Quelle = ADC_REF_INTERNAL;
-            uint8_t i=0;
-            for (i=0;i<16;i++) // 3.5ms
-            {
-               readKanal(2);
-            }
-            uint16_t adc2wert = readKanal(2);
-            //lcd_puthex(adc2wert&0x00FF);
-            //lcd_puthex((adc2wert&0xFF00)>>8);
-            lcd_gotoxy(0,3);
-            lcd_puts("k2 ");
-            lcd_putint12(adc2wert);
+            uint16_t LM35_wert = read_LM35();
             
-            //lcd_putint12(adcwert);
-            //uint16_t temperatur2 =  adc2wert*10/4; // *256/1024, unkalibriert
-            //lcd_gotoxy(12,1);
-            //lcd_putint12(temperatur2);
-            
-            //uint32_t temperatur2 =  adc2wert*265; // *265/1024, unkalibriert
-            // uint16_t t1 = adc2wert*VREF;
-            
-            uint32_t temperatur2 = adc2wert;
-            temperatur2 *=VREF;
-            //t1 = t1/0x20;
-            //lcd_gotoxy(0,3);
-            //lcd_putint16(temperatur2);
-            temperatur2 = temperatur2/0x20;
-            //lcd_gotoxy(8,1);
-            //lcd_putint12(temperatur2);
-            temperatur2 = 10*temperatur2/0x20;
-            lcd_gotoxy(8,3);
-            lcd_putint12(temperatur2&0xFFFF);
-            
-            lcd_gotoxy(13,3);
-            lcd_putint12(temperatur2/10);
-            lcd_putc('.');
-            lcd_putint1(temperatur2%10);
-            
-            //lcd_gotoxy(0,1);
-            //_delay_us(300);
-            */
-            
-            // MARK: KTY
+                                      // MARK: KTY
              uint16_t ktywert = read_KTY();
             
             // MARK: PT1000
@@ -1394,29 +1398,6 @@ int main (void)
                lcd_putint(ptwert);
             }
             lcd_putc('*');
-            //ptwert *= 4;
-            // end lookup
-            
-            //            lcd_putc(' ');
-            //            uint16_t diff = pgm_read_word(&KTY[tableindex+1])-ktywert;
-            //            diff = (diff * col)>>3;
-            
-            //            lcd_putint12(diff);
-            
-            // lcd_gotoxy(6,2);
-            //lcd_puthex((ktywert & 0xFF00)>>8);
-            // lcd_puthex(ktywert & 0x00FF);
-            // lcd_putc(' ');
-            // lcd_putint12(adc3wert - ADC_OFFSET);
-            // lcd_putint12(ktywert);
-            /*
-             lcd_gotoxy(12,2);
-             //lcd_putint12(adcwert);
-             uint16_t temperatur3 =  adc3wert*10/4; // *256/1024, unkalibriert
-             lcd_putint(temperatur3/10);
-             lcd_putc('.');
-             lcd_putint1(temperatur3%10);
-             */
             
             uint8_t k;
             for (k=0; k<wl_module_PAYLOAD; k++)
