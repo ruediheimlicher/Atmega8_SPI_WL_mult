@@ -908,6 +908,9 @@ int main (void)
    //lcd_puts(" los");
 //   wl_module_config_register(STATUS, 0xFF);
 
+   
+   uint8_t wl_delay=10;
+   
    uint8_t eevar=13;
    
    timer2();
@@ -971,13 +974,13 @@ int main (void)
          //lcd_gotoxy(0,1);
          //lcd_putc('a');
          wl_status = wl_module_get_status();
-         delay_ms(10);
+         delay_ms(wl_delay);
          wl_recv_status |= (1<<5);
          lcd_gotoxy(4,3);
          lcd_puthex(wl_status);
          pipenummer = wl_module_get_rx_pipe_from_status(wl_status);
          
-         delay_ms(10);
+         delay_ms(wl_delay);
          wl_recv_status |= (1<<4);
          
          /*
@@ -1035,16 +1038,16 @@ int main (void)
                if (rec==0x10)
                {
                   wl_recv_status |= (1<<1);
-                  delay_ms(10);
+                  delay_ms(wl_delay);
                   uint8_t readstatus = wl_module_get_data((void*)&wl_data); // Reads wl_module_PAYLOAD bytes into data array
-                  delay_ms(20);
+                  delay_ms(wl_delay);
                   //loop_channelnummer = wl_data[8];
                }
                
                wl_module_config_register(STATUS, (1<<RX_DR)); //Clear Interrupt Bit
                //wl_module_config_register(STATUS, 0xFF);
                wl_recv_status |= (1<<0);
-               delay_ms(20);                                   // kritisch
+               delay_ms(wl_delay);                                   // kritisch
                uint8_t i;
                
                
@@ -1099,22 +1102,22 @@ int main (void)
                   
                   // MARK: WL send
                   wl_module_tx_config_channel(WL_PIPE,module_channel[loop_channelnummer]); // neue Daten senden an Master auf pipe WL_PIPE
-                  delay_ms(10);                 // kritisch
+                  delay_ms(wl_delay);                 // kritisch
                   
                   //lcd_putc('u');
                   wl_module_get_one_byte(FLUSH_TX);
-                  delay_ms(20); // kritisch
+                  delay_ms(wl_delay); // kritisch
                   
                   wl_module_send(payload,wl_module_PAYLOAD);
                   //lcd_putc('v');
-                  delay_ms(20); // kritisch
+                  delay_ms(wl_delay); // kritisch
                   
                   //wl_module_rx_config(); // empfangen wieder einstellen
                   wl_module_rx_config_channel(module_channel[loop_channelnummer]);
 
                   //uint8_t tx_status = wl_module_get_status();
                   //wl_module_get_one_byte(FLUSH_RX);
-                  delay_ms(20);
+                  delay_ms(wl_delay);
                   wl_module_get_one_byte(FLUSH_RX);
                   //                  lcd_gotoxy(0,0);
                   //                 lcd_puthex(sendcounter);// 3ms
