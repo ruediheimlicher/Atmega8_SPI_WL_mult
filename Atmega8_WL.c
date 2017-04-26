@@ -257,6 +257,7 @@ uint8_t  WL_PIPE  = 2;
 
 volatile uint8_t module_channel[4] = {wl_module_Temp_channel,wl_module_ADC_channel,wl_module_Temp_channel,wl_module_ADC_channel};
 
+volatile uint16_t ptwert=0;
 
 //volatile char text[] = {'*','M','a','s','t','e','r','*'};
 char* text = "* Master *";
@@ -641,6 +642,14 @@ void SPI_Init(void)
     */
    
 }
+void SPI_ADC_init(void) // SS-Pin fuer EE aktivieren
+{
+   
+   SPI_ADC_CE_DDR |= (1<<SPI_ADC_CE);
+   SPI_ADC_CE_PORT |= (1<<SPI_ADC_CE); // HI
+}
+
+
 
 void timer1_comp(void)
 {
@@ -708,7 +717,7 @@ void timer1(void)
 
 */
 
-ISR(TIMER1_CAPT_vect)
+ISR(TIMER1_CAPT_vect) // Messung an zwei Punkten der Ladekurve eines RC aus Kondensator und PT1000/KTYxy
 {
    // Save the captured value and drop the drive line.
    if (captured == 0)
@@ -765,7 +774,7 @@ ISR(TIMER2_OVF_vect)
 ISR(TIMER2_COMP_vect) // ca 4 us
 {
    //OSZIA_LO;
-   // reset fuer PowerBank
+   // reset fuer PowerBank-Belastungsschaltung
    loadcounter++;
    if (loadcounter == 1)
    {
@@ -783,9 +792,7 @@ ISR(TIMER2_COMP_vect) // ca 4 us
    }
 
    
-   
-   
-   // PWM bestimmen
+   // PWM bestimmen am Eingang PWM_DETECT
    pwmpulscounter++;
    
    if (PWM_DETECT_PIN & (1<<PWM_DETECT)) // Pin ist Hi
@@ -830,7 +837,7 @@ ISR(TIMER2_COMP_vect) // ca 4 us
    // handle interrupt
 }
 
-#pragma mark INT1 WL
+#pragma mark INT1 WL von IRQ
 ISR(INT1_vect)
 {
    wl_spi_status |= (1<<WL_ISR_RECV);
@@ -846,165 +853,63 @@ uint16_t read_LM35(void)
 {
    VREF_Quelle = ADC_REF_INTERNAL;
    uint8_t i=0;
-   for (i=0;i<16;i++) // 3.5ms
+   for (i=0;i<16;i++) // 3.5ms  // Warten auf neueinstellung von Vref
    {
       readKanal(2);
    }
    uint16_t adc2wert = readKanal(2);
-   //lcd_puthex(adc2wert&0x00FF);
-   //lcd_puthex((adc2wert&0xFF00)>>8);
-   lcd_gotoxy(0,3);
-   lcd_puts("k2 ");
-   lcd_putint12(adc2wert);
-   
-   //lcd_putint12(adcwert);
-   //uint16_t temperatur2 =  adc2wert*10/4; // *256/1024, unkalibriert
-   //lcd_gotoxy(12,1);
-   //lcd_putint12(temperatur2);
-   
-   //uint32_t temperatur2 =  adc2wert*265; // *265/1024, unkalibriert
-   // uint16_t t1 = adc2wert*VREF;
-   
-   uint32_t temperatur2 = adc2wert;
+    uint32_t temperatur2 = adc2wert;
    temperatur2 *=VREF;
-   //t1 = t1/0x20;
-   //lcd_gotoxy(0,3);
-   //lcd_putint16(temperatur2);
    temperatur2 = temperatur2/0x20;
-   //lcd_gotoxy(8,1);
-   //lcd_putint12(temperatur2);
    temperatur2 = 10*temperatur2/0x20;
    lcd_gotoxy(8,3);
    lcd_putint12(temperatur2&0xFFFF);
-   
-   lcd_gotoxy(13,3);
-   lcd_putint12(temperatur2/10);
-   lcd_putc('.');
-   lcd_putint1(temperatur2%10);
-   
-   //lcd_gotoxy(0,1);
-   //_delay_us(300);
    return temperatur2 & 0xFFFF;
 }
 
-uint16_t read_KTY(void)
+uint16_t read_KTY(uint8_t ktykanal)
 {
    // KTY
-   uint16_t adc3wert = readKanal(3);
-   
-   //            lcd_gotoxy(0,0);
-   //lcd_puthex(adc3wert&0x00FF);
-   //lcd_puthex((adc3wert&0xFF00)>>8);
-   //lcd_gotoxy(6,2);
-   //            lcd_putc('k');
-   //            lcd_putint12(adc3wert);
-   //   adc3wert-=6;
+   uint16_t adc3wert = readKanal(ktykanal);
    /*
     #define KTY_OFFSET   30             // Offset, Start bei bei -30 °C
     #define ADC_OFFSET   204            // Startwert der ADC-Messung
     #define KTY_FAKTOR   96             // 0x60, Multiplikator
     // pgm_read_word(&KTY[xy])
     */
-   uint16_t tableindex = ((adc3wert - ADC_OFFSET)>>3); // abrunden auf Intervalltakt
-   //            lcd_putc(' ');
-   // lcd_putint(tableindex);
-   uint8_t col = (adc3wert - ADC_OFFSET) & 0x07;
-   // lcd_putc(' ');
-   //lcd_putint2(col);
-   uint16_t ktywert = pgm_read_word(&KTY[tableindex]); // Wert in Tabelle, unterer Wert
+   uint16_t tableindex = ((adc3wert - ADC_OFFSET)>>3);   // abrunden auf Intervalltakt
+   uint8_t col = (adc3wert - ADC_OFFSET) & 0x07;         // Kolonne in der Tabelle
+   uint16_t ktywert = pgm_read_word(&KTY[tableindex]);   // Wert in Tabelle, unterer Wert
    //            lcd_putint12(ktywert);
    
-   if (col) // nicht exakter wert, interpolieren
+   if (col)                                              // nicht exakter wert, interpolieren
    {
       uint16_t diff = pgm_read_word(&KTY[tableindex+1])-ktywert;
       //diff = (diff * col)<<3;
       ktywert += (diff * col)>>3;
    }
-   
-   //            lcd_putc(' ');
-   //            lcd_putint12((ktywert));
-   
-   //     lcd_putc(' ');
-   //     lcd_putint12((ktywert/KTY_FAKTOR)-KTY_OFFSET);
-   
    return ktywert;
 }
 
-uint16_t read_PT(void)
+uint16_t read_PT(uint8_t ptkanal)
 {
    // PT1000
-   lcd_gotoxy(0,2);
-   lcd_puts("k4 ");
-   PT_LO;
+   PT_LO;                        // PT belasten mit Ubat
    VREF_Quelle = ADC_REF_POWER;
    uint8_t i=0;
    for (i=0;i<16;i++)
    {
-      readKanal(4);
+      readKanal(ptkanal);        // Warten auf neueinstellung von Vref
    }
-   
-   //delay_ms(10);
-   
-   //_delay_us(200);
    //OSZIA_LO;
-   uint16_t adc4wert = readKanal(4);
+   uint16_t adc4wert = readKanal(ptkanal);
    // OSZIA_HI;
-   PT_HI;
-   lcd_putint12(adc4wert);
-   
-   
-   
-   
-   //uint32_t temperatur4 =  adc4wert*VREF; // *256/1024, unkalibriert
-   //temperatur4 /= 32;
-   
-   //lcd_putc(' ');
-   //lcd_putint16(temperatur4 & 0xFFFF);
-   //
-   //lcd_putint(temperatur4/10);
-   //lcd_putc('.');
-   //lcd_putint1(temperatur4%10);
-   
-   // lookup
-   //lcd_gotoxy(0,2);
+   PT_HI;                        // PT entlasten
    uint16_t pttableindex = ((adc4wert - PT_ADC_OFFSET)>>3); // abrunden auf Intervalltakt
-   //lcd_putc(' ');
    pttableindex = adc4wert - PT_ADC_OFFSET;
-   //lcd_putint(pttableindex);
-   
-   
-   //lcd_putint2(pttableindex);
-   
-   //uint8_t ptcol = (pttableindex) & 0x07;
-   //lcd_putc(' ');
-   //lcd_putint1(ptcol);
-   //lcd_putc('*');
-   
-   //uint16_t ptwert = pgm_read_word(&PT[8*pttableindex+ptcol]); // Wert in Tabelle
-   uint16_t ptwert = pgm_read_word(&PT[adc4wert - PT_ADC_OFFSET]); // Wert in Tabelle
-   //lcd_putint12(ptwert);
-   
-   //lcd_putc('*');
-   //lcd_putint12((ptwert/PT_ADC_FAKTOR));
+    uint16_t ptwert = pgm_read_word(&PT[adc4wert - PT_ADC_OFFSET]); // Wert in Tabelle
    ptwert /= PT_ADC_FAKTOR;
    ptwert -= PT_OFFSET;
-   lcd_gotoxy(10,2);
-   //lcd_putc(' ');
-   lcd_putc('t');
-   //lcd_putc(' ');
-   
-   //lcd_putc('*');
-   if (ptwert < 100)
-   {
-      //lcd_putc(' ');
-      lcd_putint2(ptwert);
-   }
-   else
-   {
-      lcd_putint(ptwert);
-   }
-   lcd_putc('*');
-   //ptwert *= 4;
    return ptwert;
 }
 
@@ -1022,7 +927,6 @@ int main (void)
    SPI_Init();
    
    SPI_Master_init();
-   
    
    lcd_initialize(LCD_FUNCTION_8x2, LCD_CMD_ENTRY_INC, LCD_CMD_ON);
    lcd_puts("Guten Tag\0");
@@ -1068,19 +972,25 @@ int main (void)
    // timer1_comp();
    initADC(2);
    
-   uint8_t delaycount=10;
+   uint8_t delaycount=12;
 #pragma mark while
    uint8_t readstatus = wl_module_get_data((void*)&wl_data);
    //lcd_puts(" los");
-//   wl_module_config_register(STATUS, 0xFF);
-
+   // wl_module_config_register(STATUS, 0xFF);
    
    uint8_t wl_delay=10;
    
-   uint8_t eevar=13;
-   
    timer2();
+   
+   /* 
+    //Fuer ADC-device
+    SPI_ADC_init();
+    spiADC_init();
+
+    */
+   
    sei();
+   
    while (1)
    {
       if (PIND & (1<<6))
@@ -1105,14 +1015,14 @@ int main (void)
          wl_recv_status |= (1<<7);
          pipenummer=1;
          //OSZIA_LO;
-
+/*
          lcd_gotoxy(14,3);
          lcd_putc('c');
          lcd_puthex(module_channel[loop_channelnummer]); // counter von master
          lcd_gotoxy(0,3);
          lcd_putc('c');
          lcd_puthex(wl_data[8]); // counter von master
-
+*/
          
          int0counter++;
  
@@ -1122,7 +1032,7 @@ int main (void)
          lcd_putc('i');
          lcd_puthex(int0counter); // IRQ-counter
          wl_recv_status |= (1<<6);
-         
+         delay_ms(wl_delay);
          wl_status = wl_module_get_status();
          delay_ms(wl_delay);
          wl_recv_status |= (1<<5);
@@ -1166,8 +1076,8 @@ int main (void)
                uint8_t rec = wl_module_get_rx_pw(WL_PIPE);        //gets the RX payload width on the pipe
                wl_recv_status |= (1<<2);
                delay_ms(wl_delay);
-               lcd_gotoxy(14,2);
-               lcd_puthex(rec);
+//               lcd_gotoxy(14,2);
+ //              lcd_puthex(rec);
                //lcd_putc('*');
                if (rec==0x10)
                {
@@ -1307,7 +1217,7 @@ int main (void)
       
       
       
-      
+#pragma mark LED_LOOP
       
       if (loopCount0 >=0xE0)
       {
@@ -1333,14 +1243,15 @@ int main (void)
              */
             
             
+            
             LOOPLED_PORT ^= (1<<LOOPLED_PIN);
             
             lcd_gotoxy(19,1);
             
             lcd_putint1(WL_PIPE);
-            lcd_gotoxy(10,3);
+            //lcd_gotoxy(10,3);
 
-            lcd_puthex(wl_recv_status);
+            //lcd_puthex(wl_recv_status);
             
             lcd_gotoxy(4,0);
             lcd_putc('c');
@@ -1351,8 +1262,7 @@ int main (void)
             lcd_putc('s');
             lcd_puthex(sendcounter); // counter von gesendeten Daten von mir
 
-            
-
+ 
             
             // Anzeige PWM
             /*
@@ -1375,29 +1285,19 @@ int main (void)
             // MARK: ADC Loop
             
             // MARK:  LM335
-            uint16_t LM35_wert = read_LM35();
+ //           uint16_t LM35_wert = read_LM35();
             
                                       // MARK: KTY
-             uint16_t ktywert = read_KTY();
+             uint16_t ktywert = read_KTY(3);
             
             // MARK: PT1000
-            uint16_t ptwert = read_PT();
-            lcd_gotoxy(10,2);
+            ptwert = read_PT(4);
+            lcd_gotoxy(0,1);
             //lcd_putc(' ');
             lcd_putc('t');
-            //lcd_putc(' ');
+            lcd_putc(':');
             
-            //lcd_putc('*');
-            if (ptwert < 100)
-            {
-               //lcd_putc(' ');
-               lcd_putint2(ptwert);
-            }
-            else
-            {
-               lcd_putint(ptwert);
-            }
-            lcd_putc('*');
+            lcd_putint(ptwert);
             
             uint8_t k;
             for (k=0; k<wl_module_PAYLOAD; k++)
