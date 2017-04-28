@@ -23,7 +23,6 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  DEALINGS IN THE SOFTWARE.
  
- 
  */
 
 #ifndef _WL_MODULE_H_
@@ -66,19 +65,19 @@ extern volatile uint8_t PTX;
  */
 /*
  // in defines.h
-// Port fuer INT0
-#define INTERRUPT_PORT   PORTD
-#define INTERRUPT_DDR   DDRD
-
-#define INT0_PIN        PD2
-#define INT1_PIN        PD3
-
-// Port fuer Chip select
-#define SPI_WL_PORT     PORTC
-#define SPI_WL_DDR      DDRC
-#define SPI_WL_CE       PC0
-#define SPI_WL_CSN       PC1
-*/
+ // Port fuer INT0
+ #define INTERRUPT_PORT   PORTD
+ #define INTERRUPT_DDR   DDRD
+ 
+ #define INT0_PIN        PD2
+ #define INT1_PIN        PD3
+ 
+ // Port fuer Chip select
+ #define SPI_WL_PORT     PORTC
+ #define SPI_WL_DDR      DDRC
+ #define SPI_WL_CE       PC0
+ #define SPI_WL_CSN       PC1
+ */
 
 // Definitions for selecting and enabling wl_module module
 // SPI-defines in defines.h

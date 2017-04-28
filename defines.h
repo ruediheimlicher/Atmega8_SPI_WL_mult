@@ -14,6 +14,12 @@
 /* CPU frequency */
 //#define F_CPU 8000000UL
 
+#define TEMPERATUR   1
+
+#define ADC12BIT          2
+
+#define TASK TEMPERATUR // 1: Temperatur
+
 #define LOOPLED_PORT                         PORTD
 #define LOOPLED_DDR                          DDRD
 #define LOOPLED_PIN                          4
@@ -25,13 +31,13 @@
 #define PB_LOAD_PIN                              0
 
 
-#define ADCPORT                              PORTC
-#define ADCDDR                               DDRC
+#define ADCPORT                                 PORTC
+#define ADCDDR                                  DDRC
 
-// PT100
-#define PT_PORT                               PORTD
-#define PT_DDR                                DDRD
-#define PT_LOAD_PIN                          7
+// PT1000
+#define PT_PORT                                 PORTD
+#define PT_DDR                                  DDRD
+#define PT_LOAD_PIN                             7
 #define PT_LO  PT_PORT &= ~(1<<PT_LOAD_PIN)
 #define PT_HI  PT_PORT |= (1<<PT_LOAD_PIN)
 
@@ -68,7 +74,7 @@
 #define INTERRUPT_PORT                       PORTD
 #define INTERRUPT_DDR                        DDRD
 
-//#define INT0_PIN                             PD2
+//#define INT0_PIN                           PD2
 #define INT1_PIN                             PD3
 
 
