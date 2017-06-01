@@ -17,6 +17,8 @@
 #include <avr/eeprom.h>
 //#define F_CPU 4000000UL  // 4 MHz
 #include <avr/delay.h>
+
+#include <stdint.h>
 #include "lcd.c"
 #include "adc.c"
 
@@ -30,7 +32,13 @@
 #include "wl_module.h"
 #include "nRF24L01.h"
 
-#define VREF 256
+//#if (TASK == ADC12BIT)
+#include "spi_adc.c"
+   
+
+//#endif
+
+#define VREF 259
 
 // lookup-Tabelle KTY84
 
@@ -260,6 +268,10 @@ volatile uint8_t module_channel[4] = {wl_module_Temp_channel,wl_module_ADC_chann
 volatile uint16_t ptwert=0;
 volatile uint16_t ktywert=0;
 volatile uint16_t lm35wert=0;
+volatile uint16_t batteriespannung=0;
+
+uint16_t    ADC_Array[ADC_BUFSIZE];
+
 
 //volatile char text[] = {'*','M','a','s','t','e','r','*'};
 char* text = "* Master *";
@@ -521,6 +533,7 @@ void deviceinit(void)
    DDRD &= ~(1<<5); //
    PORTD |= (1<<5);
    
+   V_NEG_DDR |= (1<<V_NEG_PIN); // Pin fuer negative Hilfsspannung
    
    PWM_DETECT_DDR &= ~(1<<PWM_DETECT);
    PWM_DETECT_PORT |= (1<<PWM_DETECT);
@@ -773,6 +786,7 @@ ISR(TIMER2_OVF_vect)
 
 ISR(TIMER2_COMP_vect) // ca 4 us
 {
+   V_NEG_PORT ^= (1<<V_NEG_PIN);
    //OSZIA_LO;
    // reset fuer PowerBank-Belastungsschaltung
    loadcounter++;
@@ -848,6 +862,26 @@ ISR (SPI_STC_vect)
 {
    // SPDR = data;
 }
+
+uint16_t read_bat(uint8_t batkanal)
+{
+   VREF_Quelle = ADC_REF_INTERNAL;
+   uint8_t i=0;
+   for (i=0;i<16;i++) // 3.5ms  // Warten auf neueinstellung von Vref
+   {
+      readKanal(batkanal);
+   }
+   uint16_t adc2wert = readKanal(batkanal);
+   uint32_t temperatur2 = adc2wert;
+   temperatur2 *=VREF;
+   temperatur2 = temperatur2/0x20;
+   temperatur2 = 10*temperatur2/0x20;
+   
+   //   lcd_gotoxy(8,3);
+   //   lcd_putint12(temperatur2&0xFFFF);
+   return temperatur2 & 0xFFFF;
+}
+
 
 uint16_t read_LM35(uint8_t lm35kanal)
 {
@@ -978,17 +1012,17 @@ int main (void)
    //lcd_puts(" los");
    // wl_module_config_register(STATUS, 0xFF);
    
-   uint8_t wl_delay=10;
+   uint8_t wl_delay=5;
    
    timer2();
    
-   /*
+   
+    if (TASK == ADC12BIT)
+{
     //Fuer ADC-device
     SPI_ADC_init();
     spiADC_init();
-    
-    */
-   
+}
    sei();
    
    while (1)
@@ -1046,7 +1080,6 @@ int main (void)
          
          if (pipenummer  <7) // Request ist fuer uns, Data schicken
          {
-            
             //           OSZIA_LO;
             if (wl_status & (1<<TX_FULL))
             {
@@ -1157,8 +1190,6 @@ int main (void)
                   wl_module_get_one_byte(FLUSH_RX);
                   maincounter++;
                   PTX=0;
-                  
-                  
                   //delay_ms(3);
                } // if WL_SEND_REQUEST
                
@@ -1213,13 +1244,10 @@ int main (void)
          
       } // end ISR abarbeiten
       
-      
-      
 #pragma mark LED_LOOP
       
       if (loopCount0 >=0xE0)
       {
-         
          loopCount1++;
          
          if ((loopCount1 >0x00AF) )//&& (!(Programmstatus & (1<<MANUELL))))
@@ -1239,9 +1267,7 @@ int main (void)
              eeprom_write_byte (3, '3');
              eeprom_write_byte (4, '4');
              */
-            
-            
-            
+
             LOOPLED_PORT ^= (1<<LOOPLED_PIN);
             
             lcd_gotoxy(19,1);
@@ -1268,8 +1294,6 @@ int main (void)
             lcd_putc('l');
             lcd_putc(':');
             lcd_putint12(lm35wert); // counter von gesendeten Daten von mir
-            
-            
             
             // Anzeige PWM
             /*
@@ -1301,13 +1325,32 @@ int main (void)
             //            payload[10] = adc2wert & 0x00FF;
             //           payload[11] = (adc2wert & 0xFF00)>>8;
             
-            
             //            payload[12] = adc3wert & 0x00FF;
             //            payload[13] = (adc3wert & 0xFF00)>>8;
             //            payload[12] = (ktywert/KTY_FAKTOR) & 0x00FF;
             //            payload[13] = ((ktywert/KTY_FAKTOR) & 0xFF00)>>8;
             payload[14] = maincounter; // fortlaufender Wert, kontrolle ob hanging
             
+            // Batteriespannung lesen
+            batteriespannung = read_bat(5);
+
+            // raw Wert uebertragen
+            payload[7] = batteriespannung & 0x00FF;
+            payload[8] = (batteriespannung & 0xFF00)>>8;
+            
+            batteriespannung /=10; // 8 bit
+            lcd_gotoxy(0,3);
+            //lcd_putc(' ');
+            lcd_putc('x');
+            lcd_putc(':');
+            lcd_putint(batteriespannung & 0x00FF);
+            
+            // Akkuspannung
+            // batteriespannung *= 2.8; // teiler ca. 3.1
+            
+            // Ladespannung extern
+            batteriespannung *= 2;
+            batteriespannung /= 10;
             
             // MARK: ADC Loop
             if (TASK == TEMPERATUR)
@@ -1316,12 +1359,25 @@ int main (void)
                lm35wert = read_LM35(2);
                
                // MARK: KTY
-               ktywert = read_KTY(3);
+               //       ktywert = read_KTY(3);
+               
+                //payload[8] = (batteriespannung & 0xFF00)>>8;
+               
+               ktywert = readKanal(3);
+               
+               lcd_gotoxy(0,2);
+               //lcd_putc(' ');
+               lcd_putc('v');
+               lcd_putc(':');
+               lcd_putint12(ktywert);
                payload[10] = ktywert & 0x00FF;
                payload[11] = (ktywert & 0xFF00)>>8;
                
+               lcd_gotoxy(10,2);
+               lcd_putint12(batteriespannung);
+               
                // MARK: PT1000
-               //   ptwert = read_PT(4);
+               ptwert = read_PT(4);
                lcd_gotoxy(0,1);
                //lcd_putc(' ');
                lcd_putc('t');
@@ -1331,6 +1387,34 @@ int main (void)
                payload[12] = (ptwert) & 0x00FF;
                payload[13] = ((ptwert) & 0xFF00)>>8;
                
+           //    payload[12] = (lm35wert) & 0x00FF;
+           //    payload[13] = ((lm35wert) & 0xFF00)>>8;
+            }
+            
+            if (TASK == ADC12BIT)
+            {
+               cli();
+               uint8_t i=0;
+               
+               for (i=0;i<4;i++)
+               {
+                  ADC_Array[i] = MCP3204_spiRead(i);
+               }
+
+               lcd_gotoxy(0,2);
+               for (i=0;i<4;i++)
+               {
+                  lcd_putint12( ADC_Array[i]);
+                  lcd_putc(' ');
+               }
+               payload[7] = ADC_Array[2];
+               sei();
+
+               lcd_gotoxy(0,1);
+               //lcd_putc(' ');
+               lcd_putc('x');
+               lcd_putc(':');
+               lcd_putint(batteriespannung & 0x00FF);
             }
             
             
@@ -1481,9 +1565,7 @@ int main (void)
        TastenStatus &= ~(1<<PB0);
        lcd_gotoxy(10,1);
        lcd_puts("*         *\0");
-       
-       
-       
+        
        }
        }//	else
        

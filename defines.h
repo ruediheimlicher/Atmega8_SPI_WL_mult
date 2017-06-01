@@ -14,6 +14,9 @@
 /* CPU frequency */
 //#define F_CPU 8000000UL
 
+#define LOOP_CHANNEL 0
+
+
 #define TEMPERATUR   1
 
 #define ADC12BIT          2
@@ -62,12 +65,15 @@
 #define SPI_SS                               PB2
 
 // SPI_ADC CE-PIN
-#define SPI_ADC_CE_PORT                      PORTB
-#define SPI_ADC_CE_DDR                       DDRB
-#define SPI_ADC_CE                           PB2
+#define SPI_ADC_CE_PORT                      PORTD
+#define SPI_ADC_CE_DDR                       DDRD
+#define SPI_ADC_CE                           PD7
 #define ADC_BUFSIZE                          4
 #define ADC_DELAY                            16
 
+#define V_NEG_DDR                            DDRD
+#define V_NEG_PORT                           PORTD
+#define V_NEG_PIN                            6
 
 
 // Port fuer INT1
@@ -79,7 +85,9 @@
 
 
 
-#define LOOP_CHANNEL 0
+
+
+
 // Port fuer Chip select
 #define SPI_WL_PORT                          PORTC
 #define SPI_WL_DDR                           DDRC

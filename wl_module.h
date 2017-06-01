@@ -38,6 +38,7 @@ extern volatile uint8_t PTX;
 
 #define wl_module_Temp_channel          100
 #define wl_module_ADC_channel           80
+#define wl_module_ADC12BIT_channel      60
 
 
 #define wl_module_PAYLOAD		16
