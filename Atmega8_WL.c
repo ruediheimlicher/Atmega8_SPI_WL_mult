@@ -277,7 +277,7 @@ uint16_t    ADC_Array[ADC_BUFSIZE];
 char* text = "* Master *";
 
 // ACD https://www.avrprogrammers.com/howto/attiny-comparator
-// ACD https://www.avrprogrammers.com/howto/attiny-comparator
+
 #define COMP_PORT PORTB
 #define COMP_DDR DDRB
 
@@ -1043,7 +1043,8 @@ int main (void)
       loopCount0 ++;
       //_delay_ms(2);
       
-      // MARK: WL Loop
+      // MARK:
+      
       if (wl_spi_status & (1<<WL_ISR_RECV)) // in ISR gesetzt, etwas ist angekommen, Master fragt nach Daten
       {
          
@@ -1312,16 +1313,18 @@ int main (void)
              lcd_putint12(pwm);
              */
             // Euler 2,71828182
-            payload[0] = maincounter;
-            payload[1] = 0;
-            payload[2] = 2;
+            payload[COUNTER] = maincounter;
+            payload[TASKBYTE] = TASK;
+            
+            /*
             payload[3] = 0;
             payload[4] = 7;
             payload[5] = 1;
             payload[6] = 8;
             payload[7] = 2;
             payload[8] = 1;
-            payload[9] = loop_channelnummer;
+             */
+ //           payload[9] = loop_channelnummer;
             //            payload[10] = adc2wert & 0x00FF;
             //           payload[11] = (adc2wert & 0xFF00)>>8;
             
@@ -1335,8 +1338,8 @@ int main (void)
             batteriespannung = read_bat(5);
 
             // raw Wert uebertragen
-            payload[7] = batteriespannung & 0x00FF;
-            payload[8] = (batteriespannung & 0xFF00)>>8;
+            payload[BATTLO] = batteriespannung & 0x00FF;
+            payload[BATTHI] = (batteriespannung & 0xFF00)>>8;
             
             batteriespannung /=10; // 8 bit
             lcd_gotoxy(0,3);
@@ -1357,11 +1360,10 @@ int main (void)
             {
                // MARK:  LM335
                lm35wert = read_LM35(2);
+               payload[ADC2LO] = lm35wert & 0x00FF;
+               payload[ADC2HI] = (lm35wert & 0xFF00)>>8;
                
                // MARK: KTY
-               //       ktywert = read_KTY(3);
-               
-                //payload[8] = (batteriespannung & 0xFF00)>>8;
                
                ktywert = readKanal(3);
                
@@ -1370,8 +1372,12 @@ int main (void)
                lcd_putc('v');
                lcd_putc(':');
                lcd_putint12(ktywert);
-               payload[10] = ktywert & 0x00FF;
-               payload[11] = (ktywert & 0xFF00)>>8;
+        //       payload[10] = ktywert & 0x00FF;
+        //       payload[11] = (ktywert & 0xFF00)>>8;
+
+               payload[ADC3LO] = ktywert & 0x00FF;
+               payload[ADC3HI] = (ktywert & 0xFF00)>>8;
+
                
                lcd_gotoxy(10,2);
                lcd_putint12(batteriespannung);
@@ -1384,11 +1390,12 @@ int main (void)
                lcd_putc(':');
                
                lcd_putint(ptwert);
-               payload[12] = (ptwert) & 0x00FF;
-               payload[13] = ((ptwert) & 0xFF00)>>8;
-               
-           //    payload[12] = (lm35wert) & 0x00FF;
-           //    payload[13] = ((lm35wert) & 0xFF00)>>8;
+         //      payload[12] = (ptwert) & 0x00FF;
+         //      payload[13] = ((ptwert) & 0xFF00)>>8;
+
+               payload[ADC4LO] = (ptwert) & 0x00FF;
+               payload[ADC4HI] = ((ptwert) & 0xFF00)>>8;
+
             }
             
             if (TASK == ADC12BIT)
@@ -1398,7 +1405,7 @@ int main (void)
                
                for (i=0;i<4;i++)
                {
-                  ADC_Array[i] = MCP3204_spiRead(i);
+                  ADC_Array[i] = MCP3204_spiRead(i); // uint16_t
                }
 
                lcd_gotoxy(0,2);
@@ -1407,7 +1414,8 @@ int main (void)
                   lcd_putint12( ADC_Array[i]);
                   lcd_putc(' ');
                }
-               payload[7] = ADC_Array[2];
+               payload[ADC12_0_LO] = ADC_Array[2] & 0x00FF;
+               payload[ADC12_0_HI] = ((ADC_Array[2] & 0x00FF)& 0xFF00)>>8;
                sei();
 
                lcd_gotoxy(0,1);

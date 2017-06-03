@@ -83,10 +83,59 @@
 //#define INT0_PIN                           PD2
 #define INT1_PIN                             PD3
 
+/*
+#define BATTLO          7
+#define BATTHI          8
 
 
+#define ADC2LO          16	// ADC 0 lo
+#define ADC2HI          17	// ADC 0 hi
+#define ADC3LO          18	// ADC 1 lo
+#define ADC3HI          19	// ADC 1 hi
+
+#define ADC4LO          20	// ADC 0 lo
+#define ADC4HI          21	// ADC 0 hi
+
+// Digi
+#define DIGI0         	28 	// Digi Eingang
+#define DIGI1          	29    // Digi Eingang
+#define DIGI2          	30    // Digi Eingang
+#define DIGI3          	31    // Digi Eingang
+*/
+
+// Ports neu
+
+#define COUNTER    0
+#define TASKBYTE    1
+#define CHANNEL    2
+#define BATTLO    7
+#define BATTHI    8
 
 
+#define ADC0LO    8
+#define ADC0HI    9
+#define ADC1LO    10
+#define ADC1HI    11
+#define ADC2LO    12
+#define ADC2HI    13
+#define ADC3LO    14
+#define ADC3HI    15
+#define ADC4LO    16
+#define ADC4HI    17
+
+
+#define ADC12_0_LO    20
+#define ADC12_0_HI    21
+#define ADC12_1_LO    22
+#define ADC12_1_HI    23
+#define ADC12_2_LO    24
+#define ADC12_2_HI    25
+#define ADC12_3_LO    26
+#define ADC12_3_HI    27
+#define DIGI0    28
+#define DIGI1    29
+#define DIGI2    30
+#define DIGI3    31
 
 // Port fuer Chip select
 #define SPI_WL_PORT                          PORTC
