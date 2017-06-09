@@ -21,7 +21,6 @@
 
 #define ADC12BIT          2
 
-//#define TASK ADC12BIT // 1: Temperatur
 
 
 // Preset fuer Device
@@ -107,7 +106,9 @@
 // Ports neu
 
 #define DEVICE    0 // TASK & maincounter
-#define BATT      1
+#define CHANNEL   1
+
+#define BATT      2
 
 #define ANALOG0    3
 

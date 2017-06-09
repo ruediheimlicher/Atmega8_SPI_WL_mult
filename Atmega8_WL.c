@@ -263,6 +263,9 @@ volatile uint8_t loop_channelnummer = 0;
 
 volatile uint8_t device_nummer = 0;
 
+volatile uint8_t TASK = 0;
+
+
 uint8_t  WL_PIPE  = 1;
 
 volatile uint8_t module_channel[4] = {wl_module_Temp_channel,wl_module_ADC_channel,wl_module_Temp_channel,wl_module_ADC_channel};
@@ -573,21 +576,22 @@ void deviceinit(void)
    {
       case 0: // TEMPERATUR
       {
-         #define TASK TEMPERATUR
+         TASK = TEMPERATUR;
          PT_DDR |= (1<<PT_LOAD_PIN); // Pin fuer Impuls-load von PT1000
          PT_PORT |= (1<<PT_LOAD_PIN);// hi
 
       }break;
+         
       case 1: // ADC_12BIT
       {
-   #define TASK ADC12BIT
+         TASK = ADC12BIT;
          V_NEG_DDR |= (1<<V_NEG_PIN); // Pin fuer Impuls-load von PT1000
          V_NEG_PORT |= (1<<V_NEG_PIN);// hi
 
       }break;
          
    }// switch
-   
+  
    //   DDRB |= (1<<PORTB0);	//OC1A: Bit 1 von PORT B als Ausgang fuer PWM
    //   PORTB |= (1<<PORTB0);	//LO
    
@@ -994,6 +998,7 @@ int main (void)
    
    deviceinit();
    
+  
    SPI_Init();
    
    SPI_Master_init();
@@ -1054,15 +1059,17 @@ int main (void)
    
    
   // if (TASK == ADC12BIT)
-       if (loop_channelnummer == 1)
+   if (loop_channelnummer == 1)
    {
       //Fuer ADC-device
       SPI_ADC_init();
       spiADC_init();
    }
    sei();
-   lcd_gotoxy(18,1);
-   lcd_puthex(loop_channelnummer);
+   lcd_gotoxy(16,1);
+   lcd_putint1(loop_channelnummer);
+   lcd_putc(' ');
+   lcd_putint2(TASK);
 
    
    while (1)
@@ -1189,20 +1196,23 @@ int main (void)
                
                
                
-               
-               uint16_t temperatur = (wl_data[11]<<8);
+               /*
+                // test OCR1A
+               uint16_t temperatur = (wl_data[11]<<8); // von teensy, nur test
                temperatur |= wl_data[10];
                //lcd_putint12(temperatur);
                
                temperatur /=4; // *256/1024, unkalibriert
-               //    lcd_putint2(temperatur/10);
-               //    lcd_putc('.');
-               //   lcd_putint1(temperatur%10);
+                   lcd_putint2(temperatur/10);
+                   lcd_putc('.');
+                  lcd_putint1(temperatur%10);
                
-               //lcd_put_tempbis99(temperatur);
+               lcd_put_tempbis99(temperatur);
                
                pwmpos = temperatur;
                OCR1A = temperatur;
+               */
+               
                //OSZIA_HI;
                wl_spi_status &= ~(1<<WL_SEND_REQUEST);
                
@@ -1363,8 +1373,6 @@ int main (void)
              */
             // Euler 2,71828182
             
-            payload[DEVICE] = TASK;
-            payload[DEVICE] |= (maincounter&0x0F)<<4;
             /*
              payload[3] = 0;
              payload[4] = 7;
@@ -1382,29 +1390,15 @@ int main (void)
             //            payload[12] = (ktywert/KTY_FAKTOR) & 0x00FF;
             //            payload[13] = ((ktywert/KTY_FAKTOR) & 0xFF00)>>8;
             
-            // Batteriespannung lesen
-            batteriespannung = read_bat(5);
-            
-            // raw Wert uebertragen
-            payload[BATT] = batteriespannung & 0x00FF;
-            
-            batteriespannung /=10; // 8 bit
-            lcd_gotoxy(0,3);
-            //lcd_putc(' ');
-            lcd_putc('x');
-            lcd_putc(':');
-            lcd_putint(batteriespannung & 0x00FF);
-            
-            // Akkuspannung
-            // batteriespannung *= 2.8; // teiler ca. 3.1
-            
-            // Ladespannung extern
-            batteriespannung *= 2;
-            batteriespannung /= 10;
             
             // MARK: ADC Loop
+            payload[DEVICE] = TASK;
+            payload[CHANNEL] = loop_channelnummer;
             if (TASK == TEMPERATUR)
+            //if (loop_channelnummer == 0)
             {
+               
+               // Messungen
                // MARK:  LM335
                lm35wert = read_LM35(2);
                payload[ANALOG0] = lm35wert & 0x00FF;
@@ -1447,7 +1441,9 @@ int main (void)
             }
             
             if (TASK == ADC12BIT)
+            //if (loop_channelnummer == 1)
             {
+               
                cli();
                uint8_t i=0;
                
