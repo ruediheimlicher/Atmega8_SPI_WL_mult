@@ -36,9 +36,10 @@ extern volatile uint8_t PTX;
 // WL-Module settings
 #define wl_module_CH			100
 
-#define wl_module_Temp_channel          100
-#define wl_module_ADC_channel           80
-#define wl_module_ADC12BIT_channel      60
+#define wl_module_Temp_channel            100
+#define wl_module_ADC_channel             90
+#define wl_module_ADC12BIT_channel        80
+#define wl_module_AUX_channel             70
 
 
 #define wl_module_PAYLOAD		16

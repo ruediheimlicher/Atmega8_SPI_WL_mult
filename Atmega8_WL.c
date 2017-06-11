@@ -263,12 +263,13 @@ volatile uint8_t loop_channelnummer = 0;
 
 volatile uint8_t device_nummer = 0;
 
-volatile uint8_t TASK = 0;
+volatile uint8_t TASK = 0; // 
 
 
 uint8_t  WL_PIPE  = 1;
 
-volatile uint8_t module_channel[4] = {wl_module_Temp_channel,wl_module_ADC_channel,wl_module_Temp_channel,wl_module_ADC_channel};
+//volatile uint8_t module_channel[4] = {wl_module_Temp_channel,wl_module_ADC_channel,wl_module_Temp_channel,wl_module_ADC_channel};
+volatile uint8_t module_channel[4] = {wl_module_Temp_channel,wl_module_ADC_channel,wl_module_ADC12BIT_channel,wl_module_AUX_channel};
 
 volatile uint16_t ptwert=0;
 volatile uint16_t ktywert=0;
@@ -590,6 +591,16 @@ void deviceinit(void)
 
       }break;
          
+      case 2:
+      {
+         
+      }break;
+
+      case 3:
+      {
+         
+      }break;
+
    }// switch
   
    //   DDRB |= (1<<PORTB0);	//OC1A: Bit 1 von PORT B als Ausgang fuer PWM
@@ -1455,7 +1466,7 @@ int main (void)
                lcd_gotoxy(0,2);
                for (i=0;i<4;i++)
                {
-                  lcd_putint12( ADC_Array[i]);
+                  lcd_putint999(ADC_Array[i]);
                   lcd_putc(' ');
                }
                payload[ANALOG0] = ADC_Array[0] & 0x00FF;
