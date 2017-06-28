@@ -950,6 +950,13 @@ uint16_t read_LM35(uint8_t lm35kanal)
 uint16_t read_KTY(uint8_t ktykanal)
 {
    // KTY
+   VREF_Quelle = ADC_REF_POWER;
+   uint8_t i=0;
+   for (i=0;i<16;i++)
+   {
+      readKanal(ktykanal);        // Warten auf neueinstellung von Vref
+   }
+
    uint16_t adc3wert = readKanal(ktykanal);
    /*
     #define KTY_OFFSET   30             // Offset, Start bei bei -30 °C
@@ -1225,6 +1232,9 @@ int main (void)
                */
                
                //OSZIA_HI;
+               
+               
+               
                wl_spi_status &= ~(1<<WL_SEND_REQUEST);
                
                //   if (pipenummer == WL_PIPE)
@@ -1341,6 +1351,7 @@ int main (void)
 
             LOOPLED_PORT ^= (1<<LOOPLED_PIN);
             
+            
 //            lcd_gotoxy(19,1);
             
 //            lcd_putint1(WL_PIPE);
@@ -1365,7 +1376,7 @@ int main (void)
             lcd_putc('l');
             lcd_putc(':');
             lcd_putint12(lm35wert); // counter von gesendeten Daten von mir
-            
+            lcd_putc('*');
             // Anzeige PWM
             /*
              lcd_gotoxy(0,0);
@@ -1403,8 +1414,23 @@ int main (void)
             
             
             // MARK: ADC Loop
-            payload[DEVICE] = TASK;
+            
+            payload[DEVICE] = TASK ;
+ //           payload[DEVICE] |= 0x30; // code-Nummer der Datenserie
+           
+            /*lcd_gotoxy(0,3);
+            lcd_putc('c');
+            
+            lcd_puthex(payload[DEVICE]);
+            uint8_t codenummer = (payload[DEVICE] & 0xF0)>>4;
+            lcd_puthex(codenummer);
+*/
+            
             payload[CHANNEL] = loop_channelnummer;
+            
+            batteriespannung = read_bat(5);
+            payload[BATT] = batteriespannung>>2;
+            
             if (TASK == TEMPERATUR)
             //if (loop_channelnummer == 0)
             {
@@ -1417,16 +1443,18 @@ int main (void)
                
                // MARK: KTY
                
-               ktywert = readKanal(3);
+               ktywert = read_KTY(3);
                
                lcd_gotoxy(0,2);
+              // lcd_gotoxy(10,1);
                //lcd_putc(' ');
                lcd_putc('v');
                lcd_putc(':');
-               lcd_putint12(ktywert);
+               lcd_putint16(ktywert);
                //       payload[10] = ktywert & 0x00FF;
                //       payload[11] = (ktywert & 0xFF00)>>8;
                
+               ktywert /= KTY_FAKTOR;
                payload[ANALOG1] = ktywert & 0x00FF;
                payload[ANALOG1+1] = (ktywert & 0xFF00)>>8;
                
@@ -1466,21 +1494,26 @@ int main (void)
                lcd_gotoxy(0,2);
                for (i=0;i<4;i++)
                {
-                  lcd_putint999(ADC_Array[i]);
+                  //lcd_putint999(ADC_Array[i]);
+                  lcd_putint12(ADC_Array[i]);
+                  
                   lcd_putc(' ');
                }
+               
                payload[ANALOG0] = ADC_Array[0] & 0x00FF;
-               payload[ANALOG0+1] = ((ADC_Array[0] & 0x00FF)& 0xFF00)>>8;
+               payload[ANALOG0+1] = (ADC_Array[0] & 0xFF00)>>8;
 
                payload[ANALOG1] = ADC_Array[1] & 0x00FF;
-               payload[ANALOG1+1] = ((ADC_Array[1] & 0x00FF)& 0xFF00)>>8;
+               payload[ANALOG1+1] = (ADC_Array[1] & 0xFF00)>>8;
 
                payload[ANALOG2] = ADC_Array[2] & 0x00FF;
-               payload[ANALOG2+1] = ((ADC_Array[2] & 0x00FF)& 0xFF00)>>8;
+               payload[ANALOG2+1] = (ADC_Array[2] & 0xFF00)>>8;
 
                payload[ANALOG3] = ADC_Array[3] & 0x00FF;
-               payload[ANALOG3+1] = ((ADC_Array[3] & 0x00FF)& 0xFF00)>>8;
+               payload[ANALOG3+1] = (ADC_Array[3] & 0xFF00)>>8;
                sei();
+               
+               
                
                lcd_gotoxy(0,1);
                //lcd_putc(' ');

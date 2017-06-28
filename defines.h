@@ -16,10 +16,13 @@
 
 #define LOOP_CHANNEL 0
 
+// device-nummern
 
-#define TEMPERATUR   1
+#define TEENSY             0 // Data vom teensy-device
 
-#define ADC12BIT          2
+#define TEMPERATUR         1
+
+#define ADC12BIT           2
 
 
 
