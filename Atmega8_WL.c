@@ -918,14 +918,10 @@ uint16_t read_bat(uint8_t batkanal)
       readKanal(batkanal);
    }
    uint16_t adc2wert = readKanal(batkanal);
-   uint32_t temperatur2 = adc2wert;
-   temperatur2 *=VREF;
-   temperatur2 = temperatur2/0x20;
-   temperatur2 = 10*temperatur2/0x20;
-   
+      
    //   lcd_gotoxy(8,3);
    //   lcd_putint12(temperatur2&0xFFFF);
-   return temperatur2 & 0xFFFF;
+   return (adc2wert >>2) & 0xFF;
 }
 
 
@@ -1429,7 +1425,7 @@ int main (void)
             payload[CHANNEL] = loop_channelnummer;
             
             batteriespannung = read_bat(5);
-            payload[BATT] = batteriespannung>>2;
+            payload[BATT] = batteriespannung;
             
             if (TASK == TEMPERATUR)
             //if (loop_channelnummer == 0)
@@ -1486,6 +1482,17 @@ int main (void)
                cli();
                uint8_t i=0;
                
+ 
+              // batteriespannung = read_bat(5);
+               lcd_gotoxy(0,1);
+               //lcd_putc(' ');
+               //lcd_putc(' ');
+               lcd_putc('b');
+               lcd_putc(':');
+               lcd_putint(batteriespannung & 0x00FF);
+               
+              // payload[BATT] = batteriespannung;
+
                for (i=0;i<4;i++)
                {
                   ADC_Array[i] = MCP3204_spiRead(i); // uint16_t
@@ -1515,12 +1522,7 @@ int main (void)
                
                
                
-               lcd_gotoxy(0,1);
-               //lcd_putc(' ');
-               lcd_putc('x');
-               lcd_putc(':');
-               lcd_putint(batteriespannung & 0x00FF);
-            }
+             }
             
             
             uint8_t k;
