@@ -1427,6 +1427,7 @@ int main (void)
             batteriespannung = read_bat(5);
             payload[BATT] = batteriespannung;
             
+            // MARK: TEMPERATUR
             if (TASK == TEMPERATUR)
             //if (loop_channelnummer == 0)
             {
@@ -1475,6 +1476,7 @@ int main (void)
                
             }
             
+            // MARK: ADC12BIT
             if (TASK == ADC12BIT)
             //if (loop_channelnummer == 1)
             {
