@@ -1473,6 +1473,8 @@ int main (void)
                payload[ANALOG2] = (ptwert) & 0x00FF;
                payload[ANALOG2+1] = ((ptwert) & 0xFF00)>>8;
                
+               payload[ANALOG3] = 0;
+               payload[ANALOG3+1] = 0;
                
             }
             
