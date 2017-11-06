@@ -554,8 +554,8 @@ void deviceinit(void)
    PWM_DETECT_DDR &= ~(1<<PWM_DETECT);
    PWM_DETECT_PORT |= (1<<PWM_DETECT);
    
-   PB_LOAD_DDR |= (1<<PB_LOAD_PIN); // reset fuer PowerBank
-   PB_LOAD_PORT |= (1<<PB_LOAD_PIN);
+//   PB_LOAD_DDR |= (1<<PB_LOAD_PIN); // reset fuer PowerBank
+ //  PB_LOAD_PORT |= (1<<PB_LOAD_PIN);
    
    
    LOOPLED_DDR |= (1<<LOOPLED_PIN);
@@ -838,12 +838,12 @@ ISR(TIMER2_COMP_vect) // ca 4 us
    loadcounter++;
    if (loadcounter == 1)
    {
-      PB_LOAD_PORT |= (1<<PB_LOAD_PIN); // Impuls start
+      //PB_LOAD_PORT |= (1<<PB_LOAD_PIN); // Impuls start
    }
    
    if (loadcounter == 0xF00)
    {
-      PB_LOAD_PORT &= ~(1<<PB_LOAD_PIN); // Impuls end
+      //PB_LOAD_PORT &= ~(1<<PB_LOAD_PIN); // Impuls end
    }
    
    if (loadcounter == 0xFFFF) // Abstand
@@ -1424,7 +1424,7 @@ int main (void)
             
             payload[CHANNEL] = loop_channelnummer;
             
-            batteriespannung = read_bat(5);
+            batteriespannung = 2*read_bat(5); // Spannungsteiler auf Board AVR_2_ADC
             payload[BATT] = batteriespannung;
             
             // MARK: TEMPERATUR
