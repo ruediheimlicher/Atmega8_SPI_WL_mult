@@ -1335,14 +1335,7 @@ int main (void)
              lcd_gotoxy(0,0);
              lcd_puthex(read[0]);
              */
-            /*
-             eeprom_write_byte (0, '0');
-             eeprom_write_byte (1, '1');
-             eeprom_write_byte (2, '2');
-             eeprom_write_byte (3, '3');
-             eeprom_write_byte (4, '4');
-             */
- //           lcd_gotoxy(18,1);
+  //           lcd_gotoxy(18,1);
  //           lcd_puthex(loop_channelnummer);
 
             LOOPLED_PORT ^= (1<<LOOPLED_PIN);
