@@ -1371,7 +1371,7 @@ int main (void)
             lcd_gotoxy(8,1);
             lcd_putc('l');
             lcd_putc(':');
-            lcd_putint12(lm35wert); // counter von gesendeten Daten von mir
+            lcd_putint12(lm35wert); // 
             lcd_putc('*');
             // Anzeige PWM
             /*
