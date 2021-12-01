@@ -1424,7 +1424,11 @@ int main (void)
             
             payload[CHANNEL] = loop_channelnummer;
             
-            batteriespannung = 2*read_bat(5); // Spannungsteiler auf Board AVR_2_ADC
+            batteriespannung = read_bat(5); // Spannungsteiler auf 2/3 auf Board AVR_1_ADC
+            lcd_gotoxy(0,3);
+            
+            lcd_putint(batteriespannung);
+            
             payload[BATT] = batteriespannung;
             
             // MARK: TEMPERATUR
@@ -1487,7 +1491,7 @@ int main (void)
                uint8_t i=0;
                
  
-              // batteriespannung = read_bat(5);
+               batteriespannung = read_bat(5);
                lcd_gotoxy(0,1);
                //lcd_putc(' ');
                //lcd_putc(' ');
