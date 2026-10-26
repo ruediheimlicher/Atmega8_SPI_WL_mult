@@ -1165,8 +1165,8 @@ int main (void)
                wl_recv_status |= (1<<3);
                //lcd_putc('x');
                //OSZIA_LO;
-               //               lcd_gotoxy(0,1);
-               //               lcd_puts("RX");
+                              lcd_gotoxy(0,1);
+                              lcd_puts("RX");
                //OSZIA_HI;
                
                uint8_t rec = wl_module_get_rx_pw(WL_PIPE);        //gets the RX payload width on the pipe
